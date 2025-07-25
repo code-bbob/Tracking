@@ -6,24 +6,42 @@ import AddShipment from './AddShipment';
 import Login from './pages/login';
 import IssueBarcodes from './IssueBarcodes';
 import ProtectedRoute from './redux/protectedRoute';
+import AppLayout from './components/AppLayout';
 import { useSelector } from 'react-redux';
-function App() {
 
+function App() {
   const { isAuthenticated } = useSelector((state) => state.root);
-  // useGlobalKeyPress();
 
   return (
     <BrowserRouter>
       <Routes>
-
-      <Route path="/login" element={<Login />} />
-      <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
-      
-        <Route path="/" element={<Home />} />
-        <Route path="/add-shipment" element={<AddShipment />} />
-        <Route path="/issue-barcodes" element={<IssueBarcodes />} />
-        <Route path="/about" element={<h1>About Page</h1>} />
-        <Route path="/contact" element={<h1>Contact Page</h1>} />
+        <Route path="/login" element={<Login />} />
+        <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
+          <Route path="/" element={
+            <AppLayout>
+              <Home />
+            </AppLayout>
+          } />
+          <Route path="/add-shipment" element={
+            <AppLayout>
+              <AddShipment />
+            </AppLayout>
+          } />
+          <Route path="/issue-barcodes" element={
+            <AppLayout>
+              <IssueBarcodes />
+            </AppLayout>
+          } />
+          <Route path="/about" element={
+            <AppLayout>
+              <h1>About Page</h1>
+            </AppLayout>
+          } />
+          <Route path="/contact" element={
+            <AppLayout>
+              <h1>Contact Page</h1>
+            </AppLayout>
+          } />
         </Route>
         <Route path="*" element={<h1>404 Not Found</h1>} />
       </Routes>

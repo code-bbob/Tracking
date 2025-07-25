@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, QrCode, Plus, Scan, Truck, CheckCircle, Clock, Search, Bell, Settings, ArrowLeft } from 'lucide-react';
+import { LogOut, QrCode, Plus, Scan, CheckCircle, Clock, Search, Bell, Settings, ArrowLeft, Menu } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { logout } from '../redux/accessSlice';
+import { useSidebar } from './AppLayout';
 
 const Navbar = ({ 
   title, 
@@ -23,6 +24,9 @@ const Navbar = ({
   const navigate = useNavigate();
   const location = useLocation();
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+  // Use the sidebar context
+  const { handleMenuClick } = useSidebar();
 
   // Fetch user role
   const fetchUserRole = async () => {
@@ -68,14 +72,21 @@ const Navbar = ({
           {/* Logo and Brand */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
+              {/* Menu Button with 3 lines */}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleMenuClick} 
+                className="p-2 hover:bg-gray-100"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+              
               {showBackButton && (
                 <Button variant="ghost" size="sm" onClick={goBack} className="p-2">
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
               )}
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Truck className="h-5 w-5 text-white" />
-              </div>
               <div>
                 <h1 className="text-lg font-bold text-gray-900">
                   {title || 'TruckFlow'}
@@ -165,14 +176,14 @@ const Navbar = ({
                   </a>
                 </Button>
 
-                {userRole === "Admin" && (
+                {/* {userRole === "Admin" && (
                   <Button size="sm" variant="outline" asChild>
                     <a href="/issue-barcodes">
                       <QrCode className="h-4 w-4 md:mr-2" />
                       <span className="hidden md:inline">Codes</span>
                     </a>
                   </Button>
-                )}
+                )} */}
               </>
             )}
 
