@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, QrCode, Plus, Scan, CheckCircle, Clock, Search, Bell, Settings, ArrowLeft, Menu } from 'lucide-react';
+import { LogOut, QrCode, Plus, Scan, CheckCircle, Clock, Search, Bell, Settings, ArrowLeft, Menu, XCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { logout } from '../redux/accessSlice';
@@ -16,6 +16,7 @@ const Navbar = ({
   onSearchChange = () => {},
   activeCount = 0,
   completedCount = 0,
+  cancelledCount = 0,
   onScanClick = () => {},
   customActions = []
 }) => {
@@ -99,19 +100,34 @@ const Navbar = ({
             </div>
 
             {/* Stats Pills - only show on desktop */}
-            {(isHomePage || activeCount > 0 || completedCount > 0) && (
-              <div className="hidden lg:flex items-center gap-3 ml-6 flex-shrink-0">
-                <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full">
-                  <Clock className="h-4 w-4 text-blue-600" />
+            {(isHomePage || activeCount > 0 || completedCount > 0 || cancelledCount > 0) && (
+              <div className="hidden lg:flex items-center gap-2 ml-4 flex-shrink-0">
+                <div>
+                <div className="flex items-center gap-1.5 bg-blue-50 px-2.5 py-1 rounded-full">
+                  <Clock className="h-3.5 w-3.5 text-blue-600" />
                   <span className="text-sm font-medium text-blue-700">{activeCount}</span>
-                  <span className="text-xs text-blue-600">Active</span>
                 </div>
-                <div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-medium text-green-700">{completedCount}</span>
-                  <span className="text-xs text-green-600">Done</span>
+                  <div className="text-xs text-blue-600">Active</div>
                 </div>
-              </div>
+                 <div>
+                <div className="flex items-center gap-1.5 bg-green-50 px-2.5 py-1 rounded-full">
+                  <Clock className="h-3.5 w-3.5 text-green-600" />
+                  <span className="text-sm font-medium text-blue-700">{completedCount}</span>
+                </div>
+                  <div className="text-xs text-green-600">Completed</div>
+                </div>
+
+               <div>
+                <div className="flex items-center gap-1.5 bg-red-50 px-2.5 py-1 rounded-full">
+                  <Clock className="h-3.5 w-3.5 text-red-600" />
+                  <span className="text-sm font-medium text-red-700">{cancelledCount}</span>
+                </div>
+                  <div className="text-xs text-red-600">Active</div>
+                </div>
+
+
+
+             </div>
             )}
           </div>
 

@@ -505,28 +505,45 @@ export default function IssueBarcodes() {
               <>
                 <div className="space-y-1 max-h-96 overflow-y-auto">
                   {existingBarcodes.map((barcode, index) => (
-                    <div key={barcode.code} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
-                      <div className="flex items-center gap-3">
-                        <span className="font-mono text-sm text-gray-900">
+                    <div key={barcode.code} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded border-l-4 border-l-transparent hover:border-l-blue-500 transition-all">
+                      <div className="flex items-center gap-3 flex-1">
+                        <span className="font-mono text-sm font-medium text-gray-900">
                           {barcode.code}
                         </span>
-                        <span className="text-sm text-gray-500">
-                          - {barcode.assigned_to.name}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          ({new Date(barcode.created_at).toLocaleDateString()})
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-600">
+                            assigned to <span className="font-medium">{barcode.assigned_to.name}</span>
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            on {new Date(barcode.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="ml-auto">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            barcode.status === 'issued' ? 'bg-blue-100 text-blue-800' :
+                            barcode.status === 'active' ? 'bg-green-100 text-green-800' :
+                            barcode.status === 'used' ? 'bg-gray-100 text-gray-800' :
+                            barcode.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {barcode.status === 'issued' ? '📋 Issued' :
+                             barcode.status === 'active' ? '🟢 Active' :
+                             barcode.status === 'used' ? '✅ Used' :
+                             barcode.status === 'cancelled' ? '❌ Cancelled' :
+                             barcode.status}
+                          </span>
+                        </div>
                       </div>
                       <Button
                         onClick={() => copyToClipboard(barcode.code)}
                         variant="ghost"
                         size="sm"
-                        className="h-6 w-6 p-0 hover:bg-gray-200"
+                        className="h-8 w-8 p-0 hover:bg-gray-200 ml-3"
                       >
                         {copiedCode === barcode.code ? (
-                          <CheckCircle className="h-3 w-3 text-green-600" />
+                          <CheckCircle className="h-4 w-4 text-green-600" />
                         ) : (
-                          <Copy className="h-3 w-3 text-gray-500" />
+                          <Copy className="h-4 w-4 text-gray-500" />
                         )}
                       </Button>
                     </div>

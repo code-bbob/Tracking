@@ -181,6 +181,7 @@ export default function Home() {
         onSearchChange={setSearchQuery}
         activeCount={filteredActive.length}
         completedCount={filteredCompleted.length}
+        cancelledCount={filteredCancelled.length}
         onScanClick={()=>setShowScanner(true)}
       />
 
@@ -229,28 +230,6 @@ export default function Home() {
                         <CompactBillCard key={truck.id} truck={truck} isCompleted />
                       ))
                     )}
-                      {filteredCompleted.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">No completed shipments</p>
-                    ) : (
-                      filteredCompleted.map(truck => (
-                        <CompactBillCard key={truck.id} truck={truck} isCompleted />
-                      ))
-                    )}
-                    {filteredCompleted.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">No completed shipments</p>
-                    ) : (
-                      filteredCompleted.map(truck => (
-                        <CompactBillCard key={truck.id} truck={truck} isCompleted />
-                      ))
-                    )}
-                    {filteredCompleted.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">No completed shipments</p>
-                    ) : (
-                      filteredCompleted.map(truck => (
-                        <CompactBillCard key={truck.id} truck={truck} isCompleted />
-                      ))
-                    )}
- 
                   </div>
                 </div>
               </div>
@@ -295,28 +274,6 @@ export default function Home() {
                       {filteredCompleted.map(truck => (
                         <CompactBillCard key={truck.id} truck={truck} isCompleted />
                       ))}
-                      {filteredCompleted.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">No completed shipments</p>
-                    ) : (
-                      filteredCompleted.map(truck => (
-                        <CompactBillCard key={truck.id} truck={truck} isCompleted />
-                      ))
-                    )}
-                    {filteredCompleted.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">No completed shipments</p>
-                    ) : (
-                      filteredCompleted.map(truck => (
-                        <CompactBillCard key={truck.id} truck={truck} isCompleted />
-                      ))
-                    )}
-                    {filteredCompleted.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">No completed shipments</p>
-                    ) : (
-                      filteredCompleted.map(truck => (
-                        <CompactBillCard key={truck.id} truck={truck} isCompleted />
-                      ))
-                    )}
- 
                     </div>
                   )}
                 </div>
