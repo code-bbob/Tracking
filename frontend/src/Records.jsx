@@ -8,8 +8,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./components/ui/dialog"
+import useAxios from "./utils/useAxios"
+
 
 export default function Records() {
+    const api = useAxios()
   const [bills, setBills] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedBill, setSelectedBill] = useState(null)
@@ -51,8 +54,6 @@ export default function Records() {
   
   const [showFilters, setShowFilters] = useState(false)
   
-  const backendUrl = import.meta.env.VITE_BACKEND_URL
-
   // Material choices
   const materialChoices = [
     { value: 'roda', label: 'Roda' },
@@ -79,6 +80,7 @@ export default function Records() {
   const fetchBills = async (page = 1) => {
     try {
       setIsLoading(true)
+      console.log('Fetching bills from API...')
       
       // Build query parameters using appliedFilters instead of filters
       const queryParams = new URLSearchParams()
@@ -103,20 +105,60 @@ export default function Records() {
         }
       })
       
-      const url = `${backendUrl}/bills/bills/?${queryParams.toString()}`
-      const res = await fetch(url)
-      if (!res.ok) throw new Error(res.status)
-      const data = await res.json()
+      const url = `/bills/bills/?${queryParams.toString()}`
+      console.log('Making request to:', url)
       
-      setBills(data.results || data)
+      const response = await api.get(url)
+      console.log('Response received:', response.data)
+      
+      const data = response.data
+      
+      // Handle paginated response structure
+      const billsData = data.results || data
+      const isArray = Array.isArray(billsData)
+      
+      if (!isArray) {
+        console.error('Expected array of bills, received:', billsData)
+        setBills([])
+        return
+      }
+      
+      // Convert data for frontend compatibility
+      const convertedBills = billsData.map(bill => ({
+        ...bill,
+        vehicleNumber: bill.vehicle_number,
+        dateIssued: bill.date_issued,
+        billNumber: bill.code,
+        cargo: bill.material,
+        expectedTime: bill.eta,
+        billIssueTime: new Date(bill.date_issued).toLocaleString("en-US"),
+      }))
+      
+      setBills(convertedBills)
       setPagination({
-        count: data.count || data.length,
+        count: data.count || billsData.length,
         next: data.next,
         previous: data.previous
       })
       
     } catch (error) {
       console.error("Error fetching bills:", error)
+      console.error("Error response:", error.response)
+      
+      // Log more details about the error
+      if (error.response) {
+        console.error("Status:", error.response.status)
+        console.error("Headers:", error.response.headers)
+        console.error("Data:", error.response.data)
+      } else if (error.request) {
+        console.error("Request made but no response:", error.request)
+      } else {
+        console.error("Error message:", error.message)
+      }
+      
+      // Set empty state on error
+      setBills([])
+      setPagination({ count: 0, next: null, previous: null })
     } finally {
       setIsLoading(false)
     }
@@ -262,190 +304,193 @@ export default function Records() {
               <h3 className="font-semibold">Filters</h3>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {/* Search */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <form onSubmit={(e) => { e.preventDefault(); applyFilters(); }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {/* Search */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      value={filters.search}
+                      onChange={(e) => handleFilterChange('search', e.target.value)}
+                      placeholder="Search bills..."
+                      className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Status */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <select
+                    value={filters.status}
+                    onChange={(e) => handleFilterChange('status', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+
+                {/* Material */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Material</label>
+                  <select
+                    value={filters.material}
+                    onChange={(e) => handleFilterChange('material', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">All Materials</option>
+                    {materialChoices.map(choice => (
+                      <option key={choice.value} value={choice.value}>{choice.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Region */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                  <select
+                    value={filters.region}
+                    onChange={(e) => handleFilterChange('region', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">All Regions</option>
+                    <option value="local">Local</option>
+                    <option value="crossborder">Crossborder</option>
+                  </select>
+                </div>
+
+                {/* Vehicle Size */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Size</label>
+                  <select
+                    value={filters.vehicleSize}
+                    onChange={(e) => handleFilterChange('vehicleSize', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">All Sizes</option>
+                    {vehicleSizeChoices.map(choice => (
+                      <option key={choice.value} value={choice.value}>{choice.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Issued By */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Issued By</label>
                   <input
                     type="text"
-                    value={filters.search}
-                    onChange={(e) => handleFilterChange('search', e.target.value)}
-                    placeholder="Search bills..."
-                    className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={filters.issuedBy}
+                    onChange={(e) => handleFilterChange('issuedBy', e.target.value)}
+                    placeholder="User name..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Date Issued From */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date Issued From</label>
+                  <input
+                    type="date"
+                    value={filters.dateIssuedFrom}
+                    onChange={(e) => handleFilterChange('dateIssuedFrom', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Date Issued To */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date Issued To</label>
+                  <input
+                    type="date"
+                    value={filters.dateIssuedTo}
+                    onChange={(e) => handleFilterChange('dateIssuedTo', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Amount From */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Amount From</label>
+                  <input
+                    type="number"
+                    value={filters.amountFrom}
+                    onChange={(e) => handleFilterChange('amountFrom', e.target.value)}
+                    placeholder="Min amount"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Amount To */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Amount To</label>
+                  <input
+                    type="number"
+                    value={filters.amountTo}
+                    onChange={(e) => handleFilterChange('amountTo', e.target.value)}
+                    placeholder="Max amount"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Checked By (Modified By) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Checked By</label>
+                  <input
+                    type="text"
+                    value={filters.modifiedBy}
+                    onChange={(e) => handleFilterChange('modifiedBy', e.target.value)}
+                    placeholder="User name..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Checked Date From (Modified Date From) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Checked Date From</label>
+                  <input
+                    type="date"
+                    value={filters.dateModifiedFrom}
+                    onChange={(e) => handleFilterChange('dateModifiedFrom', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                {/* Checked Date To (Modified Date To) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Checked Date To</label>
+                  <input
+                    type="date"
+                    value={filters.dateModifiedTo}
+                    onChange={(e) => handleFilterChange('dateModifiedTo', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
 
-              {/* Status */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select
-                  value={filters.status}
-                  onChange={(e) => handleFilterChange('status', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              {/* Filter Action Buttons */}
+              <div className="flex gap-3 mt-4 pt-4 border-t">
+                <Button 
+                  type="submit"
+                  className="flex items-center gap-2"
                 >
-                  <option value="">All Statuses</option>
-                  <option value="pending">Pending</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
-
-              {/* Material */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Material</label>
-                <select
-                  value={filters.material}
-                  onChange={(e) => handleFilterChange('material', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  <Search className="h-4 w-4" />
+                  Apply Filters
+                </Button>
+                <Button 
+                  type="button"
+                  variant="outline"
+                  onClick={clearFilters}
                 >
-                  <option value="">All Materials</option>
-                  {materialChoices.map(choice => (
-                    <option key={choice.value} value={choice.value}>{choice.label}</option>
-                  ))}
-                </select>
+                  Clear All
+                </Button>
               </div>
-
-              {/* Region */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
-                <select
-                  value={filters.region}
-                  onChange={(e) => handleFilterChange('region', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">All Regions</option>
-                  <option value="local">Local</option>
-                  <option value="crossborder">Crossborder</option>
-                </select>
-              </div>
-
-              {/* Vehicle Size */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Size</label>
-                <select
-                  value={filters.vehicleSize}
-                  onChange={(e) => handleFilterChange('vehicleSize', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">All Sizes</option>
-                  {vehicleSizeChoices.map(choice => (
-                    <option key={choice.value} value={choice.value}>{choice.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Issued By */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Issued By</label>
-                <input
-                  type="text"
-                  value={filters.issuedBy}
-                  onChange={(e) => handleFilterChange('issuedBy', e.target.value)}
-                  placeholder="User name..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Date Issued From */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date Issued From</label>
-                <input
-                  type="date"
-                  value={filters.dateIssuedFrom}
-                  onChange={(e) => handleFilterChange('dateIssuedFrom', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Date Issued To */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date Issued To</label>
-                <input
-                  type="date"
-                  value={filters.dateIssuedTo}
-                  onChange={(e) => handleFilterChange('dateIssuedTo', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Amount From */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Amount From</label>
-                <input
-                  type="number"
-                  value={filters.amountFrom}
-                  onChange={(e) => handleFilterChange('amountFrom', e.target.value)}
-                  placeholder="Min amount"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Amount To */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Amount To</label>
-                <input
-                  type="number"
-                  value={filters.amountTo}
-                  onChange={(e) => handleFilterChange('amountTo', e.target.value)}
-                  placeholder="Max amount"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Checked By (Modified By) */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Checked By</label>
-                <input
-                  type="text"
-                  value={filters.modifiedBy}
-                  onChange={(e) => handleFilterChange('modifiedBy', e.target.value)}
-                  placeholder="User name..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Checked Date From (Modified Date From) */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Checked Date From</label>
-                <input
-                  type="date"
-                  value={filters.dateModifiedFrom}
-                  onChange={(e) => handleFilterChange('dateModifiedFrom', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Checked Date To (Modified Date To) */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Checked Date To</label>
-                <input
-                  type="date"
-                  value={filters.dateModifiedTo}
-                  onChange={(e) => handleFilterChange('dateModifiedTo', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            {/* Filter Action Buttons */}
-            <div className="flex gap-3 mt-4 pt-4 border-t">
-              <Button 
-                onClick={applyFilters}
-                className="flex items-center gap-2"
-              >
-                <Search className="h-4 w-4" />
-                Apply Filters
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={clearFilters}
-              >
-                Clear All
-              </Button>
-            </div>
+            </form>
           </div>
         )}
 
