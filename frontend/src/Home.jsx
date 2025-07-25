@@ -269,7 +269,7 @@ function Home() {
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
   }
 
-  // Compact Bill Card Component
+  // Compact Bill Card Component - Updated to match your changes
   const CompactBillCard = ({ truck, isCompleted = false }) => {
     const overdueShipment = !isCompleted && isOverdue(truck.expectedTime || truck.eta)
     const displayMaterial = truck.material ? getBilingualText(truck.material, materialTypeMap) : truck.cargo
@@ -300,24 +300,17 @@ function Home() {
         <div className="space-y-1 text-xs text-gray-600">
           <div className="flex justify-between">
             <span className="truncate flex-1 mr-2">{displayMaterial}</span>
-            {truck.amount && (
-              <span className="font-medium">Rs. {truck.amount}</span>
-            )}
+            {truck.amount && <span className="font-medium">Rs. {truck.amount}</span>}
           </div>
           <div className="flex justify-between">
-            
-          <div className="truncate">{formatDateTime(truck.dateIssued)}</div>
-          <div className="truncate">{truck.destination}</div>
-          <div className="truncate">{formatDateTime(truck.completedTime ? truck.completedTime : truck.expectedTime || truck.eta) || "TBD"}</div>
+            <div className="truncate">{formatDateTime(truck.dateIssued)}</div>
+            <div className="truncate">{truck.destination}</div>
+            <div className="truncate">
+              {formatDateTime(truck.completedTime ? truck.completedTime : truck.expectedTime || truck.eta) || "TBD"}
+            </div>
           </div>
           {userRole === "Admin" && <div className="font-mono text-gray-500">{billNumber}</div>}
         </div>
-
-        {isCompleted && (
-          <div className="mt-2 text-xs text-green-600 font-medium">
-            ✓ {formatDateTime(truck.completedTime || truck.dateIssued)}
-          </div>
-        )}
       </div>
     )
   }
@@ -520,160 +513,156 @@ function Home() {
       {/* Barcode Scanner Modal */}
       {showScanner && <BarcodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />}
 
-      {/* Shipment Details Modal */}
+      {/* Compact Shipment Details Modal */}
       {selectedTruck && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4"
+          className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-2 sm:p-4"
           onClick={closeDetails}
         >
           <div
-            className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-lg w-full max-w-lg max-h-[95vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center p-6 border-b">
-              <h2 className="text-xl font-semibold text-gray-900">Shipment Details</h2>
+            {/* Compact Header */}
+            <div className="flex justify-between items-center p-4 border-b bg-gray-50">
+              <h2 className="text-lg font-semibold text-gray-900">Shipment Details</h2>
               <button
-                className="text-gray-400 hover:text-gray-600 text-2xl w-8 h-8 flex items-center justify-center"
+                className="text-gray-400 hover:text-gray-600 text-xl w-6 h-6 flex items-center justify-center"
                 onClick={closeDetails}
               >
                 ×
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
-              {/* Basic Information */}
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">Vehicle Number</label>
-                    <div className="text-lg font-mono font-semibold">
-                      {selectedTruck.vehicleNumber || selectedTruck.truckNumber}
-                    </div>
+            <div className="p-4 space-y-4">
+              {/* Vehicle & Status */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Vehicle</label>
+                  <div className="text-base font-mono font-semibold">
+                    {selectedTruck.vehicleNumber || selectedTruck.truckNumber}
                   </div>
-                  {userRole === "Admin" && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-500 mb-1">Bill Code</label>
-                      <div className="text-lg font-mono">{selectedTruck.code || selectedTruck.billNumber}</div>
-                    </div>
-                  )}
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+                  <span
+                    className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${getStatusColor(selectedTruck.status, !selectedTruck.completedTime && isOverdue(selectedTruck.expectedTime || selectedTruck.eta), selectedTruck.region)}`}
+                  >
+                    {selectedTruck.status}
+                  </span>
+                </div>
+              </div>
+
+              {/* Bill Code (Admin only) */}
+              {userRole === "Admin" && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Bill Code</label>
+                  <div className="text-sm font-mono bg-gray-50 p-2 rounded">
+                    {selectedTruck.code || selectedTruck.billNumber}
+                  </div>
+                </div>
+              )}
+
+              {/* Material & Destination */}
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Material</label>
+                  <div className="text-sm">
+                    {selectedTruck.material
+                      ? getBilingualText(selectedTruck.material, materialTypeMap)
+                      : selectedTruck.cargo}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Destination</label>
+                  <div className="text-sm">{selectedTruck.destination}</div>
+                </div>
+              </div>
+
+              {/* Region & Vehicle Size */}
+              <div className="grid grid-cols-2 gap-3">
+                {selectedTruck.region && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">Status</label>
-                    <span
-                      className={`inline-flex items-center px-3 py-1 rounded-md text-sm font-medium ${getStatusColor(selectedTruck.status, !selectedTruck.completedTime && isOverdue(selectedTruck.expectedTime || selectedTruck.eta), selectedTruck.region)}`}
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Region</label>
+                    <div
+                      className={`text-sm ${selectedTruck.region.toLowerCase() === "local" ? "text-yellow-700 font-medium" : ""}`}
                     >
-                      {selectedTruck.status}
-                    </span>
-                  </div>
-                  {selectedTruck.issueLocation && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-500 mb-1">Issue Location</label>
-                      <div>{selectedTruck.issueLocation}</div>
+                      {getBilingualText(selectedTruck.region, regionMap)}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
+                {selectedTruck.vehicleSize && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Vehicle Size</label>
+                    <div className="text-sm">{getBilingualText(selectedTruck.vehicleSize, vehicleSizeMap)}</div>
+                  </div>
+                )}
               </div>
 
-              {/* Material & Transport Details */}
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Transport Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">Material</label>
-                    <div>
-                      {selectedTruck.material
-                        ? getBilingualText(selectedTruck.material, materialTypeMap)
-                        : selectedTruck.cargo}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">Destination</label>
-                    <div>{selectedTruck.destination}</div>
-                  </div>
-                  {selectedTruck.vehicleSize && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-500 mb-1">Vehicle Size</label>
-                      <div>{getBilingualText(selectedTruck.vehicleSize, vehicleSizeMap)}</div>
-                    </div>
-                  )}
-                  {selectedTruck.region && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-500 mb-1">Region</label>
-                      <div
-                        className={selectedTruck.region.toLowerCase() === "local" ? "text-yellow-700 font-medium" : ""}
-                      >
-                        {getBilingualText(selectedTruck.region, regionMap)}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Financial Information */}
+              {/* Amount */}
               {selectedTruck.amount && (
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Financial Information</h3>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">Amount</label>
-                    <div className="text-2xl font-bold text-green-600">
-                      NPR {Number.parseFloat(selectedTruck.amount).toLocaleString()}
-                    </div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Amount</label>
+                  <div className="text-lg font-bold text-green-600">
+                    Rs. {Number.parseFloat(selectedTruck.amount).toLocaleString()}
                   </div>
                 </div>
               )}
 
               {/* Time Information */}
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Time Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">Expected Arrival</label>
-                    <div
-                      className={
-                        isOverdue(selectedTruck.expectedTime || selectedTruck.eta) && !selectedTruck.completedTime
-                          ? "text-red-600 font-medium"
-                          : ""
-                      }
-                    >
-                      {selectedTruck.eta || selectedTruck.expectedTime}
-                    </div>
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Date Issued</label>
+                  <div className="text-sm">
+                    {selectedTruck.dateIssued
+                      ? new Date(selectedTruck.dateIssued).toLocaleString()
+                      : selectedTruck.billIssueTime}
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">Date Issued</label>
-                    <div>
-                      {selectedTruck.dateIssued
-                        ? new Date(selectedTruck.dateIssued).toLocaleString()
-                        : selectedTruck.billIssueTime}
-                    </div>
-                  </div>
-                  {selectedTruck.completedTime && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-500 mb-1">Completed</label>
-                      <div className="text-green-600 font-medium">{selectedTruck.completedTime}</div>
-                    </div>
-                  )}
                 </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Expected Arrival</label>
+                  <div
+                    className={`text-sm ${
+                      isOverdue(selectedTruck.expectedTime || selectedTruck.eta) && !selectedTruck.completedTime
+                        ? "text-red-600 font-medium"
+                        : ""
+                    }`}
+                  >
+                    {selectedTruck.eta || selectedTruck.expectedTime || "TBD"}
+                  </div>
+                </div>
+                {selectedTruck.completedTime && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Completed</label>
+                    <div className="text-sm text-green-600 font-medium">{selectedTruck.completedTime}</div>
+                  </div>
+                )}
               </div>
 
-              {/* Additional Information */}
+              {/* Issue Location */}
+              {selectedTruck.issueLocation && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Issue Location</label>
+                  <div className="text-sm">{selectedTruck.issueLocation}</div>
+                </div>
+              )}
+
+              {/* Remarks */}
               {selectedTruck.remark && (
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Additional Information</h3>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-500 mb-1">Remarks</label>
-                    <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">{selectedTruck.remark}</div>
-                  </div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Remarks</label>
+                  <div className="text-sm text-gray-700 bg-gray-50 p-2 rounded">{selectedTruck.remark}</div>
                 </div>
               )}
 
               {/* Barcode - Only show for Admin */}
               {userRole === "Admin" && (
-                <div className="border-t pt-6">
-                  <div className="bg-gray-50 p-4 rounded-lg text-center">
-                    <div className="font-mono text-sm tracking-wider text-gray-800 mb-2">
+                <div className="border-t pt-4">
+                  <div className="bg-gray-50 p-3 rounded text-center">
+                    <div className="font-mono text-xs tracking-wider text-gray-800 mb-1">
                       {generateBarcode(selectedTruck.code || selectedTruck.billNumber)}
                     </div>
-                    <div className="text-sm font-medium text-gray-600">
+                    <div className="text-xs font-medium text-gray-600">
                       {selectedTruck.code || selectedTruck.billNumber}
                     </div>
                   </div>
