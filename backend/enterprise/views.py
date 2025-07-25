@@ -4,8 +4,23 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils.dateparse import parse_date
 from datetime import datetime, date
-from .serializers import BranchSerializer
-from .models import Branch
+from .serializers import BranchSerializer, PersonSerializer
+from .models import Branch, Person
+
+class PersonView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        # Only admins can access the persons list
+        if user.person.role != 'Admin':
+            return Response({'error': 'You do not have permission to view this resource.'}, status=403)
+        
+        # Get all persons in the same enterprise
+        enterprise = user.person.enterprise
+        persons = Person.objects.filter(enterprise=enterprise)
+        serializer = PersonSerializer(persons, many=True)
+        return Response(serializer.data)
 
 class BranchView(APIView):
     permission_classes = [IsAuthenticated]

@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
 import BarcodeScanner from './BarcodeScanner';
+import { logout } from "./redux/accessSlice"
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { LogOut, QrCode } from 'lucide-react';
+import { Button } from './components/ui/button';
 
 // API configuration
 const API_BASE_URL = 'http://localhost:8000';
@@ -10,6 +15,10 @@ function Home() {
   const [userShipments, setUserShipments] = useState([]);
   const [completedUserShipments, setCompletedUserShipments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userRole, setUserRole] = useState('');
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   // Material type mapping for display
   const materialTypeMap = {
@@ -38,6 +47,34 @@ function Home() {
     'Other': { en: 'Other', np: 'अन्य' }
   };
 
+  
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken")
+    localStorage.removeItem("refreshToken")
+    dispatch(logout())
+    navigate("/login")
+  }
+
+  // Fetch user role
+  const fetchUserRole = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${backendUrl}/enterprise/role/`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const role = await response.json();
+        setUserRole(role);
+      }
+    } catch (err) {
+      console.error('Error fetching user role:', err);
+    }
+  };
+
   // Helper function to get bilingual display text
   const getBilingualText = (value, mapping) => {
     const item = mapping[value];
@@ -48,7 +85,7 @@ function Home() {
   const fetchBills = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/bills/bills/`, {
+      const response = await fetch(`${backendUrl}/bills/bills/`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -124,6 +161,7 @@ function Home() {
   // Load shipments on component mount
   useEffect(() => {
     fetchBills();
+    fetchUserRole();
     
     // Listen for storage changes (when new shipments are added)
     const handleStorageChange = () => {
@@ -325,6 +363,7 @@ function Home() {
         }`}
         onClick={() => handleTruckClick(truck)}
       >
+      
         <div className="flex justify-between items-start mb-2">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -450,6 +489,7 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      
       {/* Header */}
       <div className="bg-white/90 backdrop-blur-sm shadow-sm border-b border-gray-200 sticky top-0 z-40">
         <div className="px-3 py-3 sm:px-4 sm:py-4">
@@ -471,6 +511,22 @@ function Home() {
               >
                 + Add | थप्नुहोस्
               </a>
+              {userRole === 'Admin' && (
+                <a 
+                  href="/issue-barcodes" 
+                  className="flex-1 sm:flex-none bg-gradient-to-r from-purple-600 to-violet-600 text-white px-3 py-2 rounded-lg hover:from-purple-700 hover:to-violet-700 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-medium transition-all duration-200 text-center shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                >
+                  <QrCode size={16} />
+                  Issue Codes
+                </a>
+              )}
+              <Button
+            onClick={handleLogout}
+            className=" top-full hover:bg-red-600 text-white"
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </Button>
               {/* Stats */}
               {!isLoading && (
                 <div className="flex space-x-4 bg-white/80 backdrop-blur-sm rounded-lg px-4 py-2 border border-gray-200">
