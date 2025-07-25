@@ -41,6 +41,3 @@ class Bill(models.Model):
     ], default='pending')
     remark = models.TextField(blank=True, null=True)
     # paid = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"Bill {self.bill_number} - Amount: {self.amount} - Due: {self.due_date}"

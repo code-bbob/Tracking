@@ -3,8 +3,7 @@ import './App.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './Home';
 import AddShipment from './AddShipment';
-import Login from '@/pages/Login';
-
+import Login from './pages/login';
 function App() {
   const [count, setCount] = useState(0);
 

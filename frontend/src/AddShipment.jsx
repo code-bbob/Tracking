@@ -30,6 +30,7 @@ export default function AddShipment() {
     hasDriver: false,
     driverName: "",
     driverPhone: "",
+
   })
 
   const [showScanner, setShowScanner] = useState(false)

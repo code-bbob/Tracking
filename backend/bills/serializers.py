@@ -12,11 +12,14 @@ class BillSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
-        # Handle issued_by field - use first Person or create a default one
-        
         code = validated_data.get('code')
+        issued_by = validated_data.get('issued_by')
+        print("haha",code)
         if code:
             barcode = Barcode.objects.filter(code=code).first()
+            if barcode.assigned_to != issued_by:
+                raise serializers.ValidationError("This barcode was not issued to you")
+
             if barcode and barcode.status == 'issued':
                 barcode.status = 'active'
                 barcode.save()
