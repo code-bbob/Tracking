@@ -5,6 +5,7 @@ import Home from './Home';
 import AddShipment from './AddShipment';
 import Login from './pages/login';
 import IssueBarcodes from './IssueBarcodes';
+import Records from './Records';
 import ProtectedRoute from './redux/protectedRoute';
 import AppLayout from './components/AppLayout';
 import { useSelector } from 'react-redux';
@@ -30,6 +31,11 @@ function App() {
           <Route path="/issue-barcodes" element={
             <AppLayout>
               <IssueBarcodes />
+            </AppLayout>
+          } />
+          <Route path="/records" element={
+            <AppLayout>
+              <Records />
             </AppLayout>
           } />
           <Route path="/about" element={

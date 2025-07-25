@@ -61,7 +61,11 @@ export default function Home() {
       setIsLoading(true)
       const res = await fetch(`${backendUrl}/bills/bills/`)
       if (!res.ok) throw new Error(res.status)
-      const bills = await res.json()
+      const data = await res.json()
+      
+      // Handle both paginated and non-paginated responses
+      const bills = data.results || data
+      
       const converted = bills.map(b => ({
         ...b,
         vehicleNumber: b.vehicle_number,
@@ -71,12 +75,19 @@ export default function Home() {
         expectedTime: b.eta,
         billIssueTime: new Date(b.date_issued).toLocaleString("en-US"),
       }))
-      setUserShipments(converted.filter(b => b.status === "pending"))
-      setCompletedUserShipments(converted.filter(b => b.status === "completed"))
-      setCancelledUserShipments(converted.filter(b => b.status === "cancelled"))
-      localStorage.setItem("truckShipments", JSON.stringify(userShipments))
-      localStorage.setItem("completedShipments", JSON.stringify(completedUserShipments))
-      localStorage.setItem("cancelledShipments", JSON.stringify(cancelledUserShipments))
+      
+      const pending = converted.filter(b => b.status === "pending")
+      const completed = converted.filter(b => b.status === "completed")
+      const cancelled = converted.filter(b => b.status === "cancelled")
+      
+      setUserShipments(pending)
+      setCompletedUserShipments(completed)
+      setCancelledUserShipments(cancelled)
+      
+      // Save to localStorage after processing
+      localStorage.setItem("truckShipments", JSON.stringify(pending))
+      localStorage.setItem("completedShipments", JSON.stringify(completed))
+      localStorage.setItem("cancelledShipments", JSON.stringify(cancelled))
     } catch {
       const saved = JSON.parse(localStorage.getItem("truckShipments") || "[]")
       const savedComp = JSON.parse(localStorage.getItem("completedShipments") || "[]")

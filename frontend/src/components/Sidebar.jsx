@@ -38,41 +38,41 @@ const Sidebar = ({ isOpen, onClose }) => {
       description: 'Generate tracking codes'
     },
     {
+      label: 'Records',
+      icon: FileText,
+      path: '/records',
+      description: 'Shipment history'
+    },
+    {
       label: 'Analytics',
       icon: BarChart3,
       path: '/analytics',
-      description: 'View reports'
+      description: 'View statistics'
     },
-    {
-      label: 'Fleet Management',
-      icon: Truck,
-      path: '/fleet',
-      description: 'Manage vehicles'
-    },
-    {
-      label: 'Inventory',
-      icon: Package,
-      path: '/inventory',
-      description: 'Material tracking'
-    },
-    {
-      label: 'Reports',
-      icon: FileText,
-      path: '/reports',
-      description: 'Generate reports'
-    },
-    {
-      label: 'Users',
-      icon: Users,
-      path: '/users',
-      description: 'Manage users'
-    },
-    {
-      label: 'Settings',
-      icon: Settings,
-      path: '/settings',
-      description: 'App settings'
-    }
+    // {
+    //   label: 'Inventory',
+    //   icon: Package,
+    //   path: '/inventory',
+    //   description: 'Material tracking'
+    // },
+    // {
+    //   label: 'Reports',
+    //   icon: FileText,
+    //   path: '/reports',
+    //   description: 'Generate reports'
+    // },
+    // {
+    //   label: 'Users',
+    //   icon: Users,
+    //   path: '/users',
+    //   description: 'Manage users'
+    // },
+    // {
+    //   label: 'Settings',
+    //   icon: Settings,
+    //   path: '/settings',
+    //   description: 'App settings'
+    // }
   ];
 
   const handleNavigation = (path) => {
