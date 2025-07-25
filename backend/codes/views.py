@@ -30,8 +30,7 @@ class IssueBarcodeView(APIView):
         
         count = request.data.get('count', 1)
 
-        assigned_by_id = request.data.get('assigned_by')
-        assigned_by = Person.objects.get(user=assigned_by_id)
+        assigned_by = person
         assigned_to_id = request.data.get('assigned_to')
         assigned_to = Person.objects.get(user=assigned_to_id)
         # person = Person.objects.get(id=assigned_to_id)

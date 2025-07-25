@@ -1,5 +1,6 @@
 "use client"
 
+
 import { useState } from "react"
 import { ArrowLeft, Scan, Plus, Truck } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -104,18 +105,15 @@ export default function AddShipment() {
     const etaTime = new Date(now.getTime() + Number.parseFloat(hours) * 60 * 60 * 1000)
     return etaTime.toISOString()
   }
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsSubmitting(true)
     setSubmitStatus({ type: "", message: "" })
-
+  
     try {
       const eta = calculateETA(formData.etaHours)
-
-      // Generate bill code if not provided
       const billCode = formData.code || `BILL${Date.now().toString().slice(-6)}`
-
+  
       const billData = {
         code: billCode,
         vehicle_number: formData.vehicleNumber,
@@ -125,53 +123,22 @@ export default function AddShipment() {
         destination: formData.destination,
         vehicle_size: formData.vehicleSize,
         region: formData.region,
-        eta: eta,
+        eta,
         remark: formData.hasDriver ? `Driver: ${formData.driverName}` : "Driver TBD",
         status: "pending",
       }
-
-      // Submit to API
+  
       const response = await api.post(`${API_BASE_URL}/bills/bills/`, billData)
       const createdBill = response.data
-      // Also save to localStorage for backward compatibility
-      const newShipment = {
-        id: createdBill.id,
-        code: billCode,
-        vehicleNumber: formData.vehicleNumber,
-        amount: formData.amount,
-        issueLocation: formData.issueLocation,
-        material: formData.material,
-        destination: formData.destination,
-        vehicleSize: formData.vehicleSize,
-        region: formData.region,
-        eta: eta,
-        etaHours: formData.etaHours,
-        remark: formData.hasDriver ? `Driver: ${formData.driverName}` : "Driver TBD",
-        driverName: formData.driverName || "Driver TBD",
-        driverPhone: formData.driverPhone || "",
-        dateIssued: new Date().toISOString(),
-        status: "pending",
-        // Legacy fields for compatibility
-        truckNumber: formData.vehicleNumber,
-        billNumber: billCode,
-        cargo: formData.material,
-        expectedTime: eta,
-        billIssueTime: new Date().toLocaleString("en-US"),
-        progress: 5,
-      }
-
-      // Update localStorage
-      const existingShipments = JSON.parse(localStorage.getItem("truckShipments") || "[]")
-      existingShipments.push(newShipment)
-      localStorage.setItem("truckShipments", JSON.stringify(existingShipments))
-
+  
+      // …your existing success logic…
+  
       setSubmitStatus({
         type: "success",
         message: `Shipment ${billCode} created successfully!`,
       })
-
-      // Reset form after successful submission
-      setTimeout(() => {
+  
+      // reset form after a delay
         setFormData({
           code: "",
           vehicleNumber: "",
@@ -187,12 +154,33 @@ export default function AddShipment() {
           driverPhone: "",
         })
         setSubmitStatus({ type: "", message: "" })
-      }, 2000)
-    } catch (error) {
-      console.error("Error creating shipment:", error)
+  
+    } catch (err) {
+      // Try to pull out the DRF validation message
+      let message = "Failed to create shipment."
+      if (err.response && err.response.data) {
+        const data = err.response.data
+        // If non_field_errors exists, use that
+        if (data.non_field_errors && data.non_field_errors.length) {
+          message = data.non_field_errors[0]
+        } else {
+          // Otherwise, take the first field’s first message
+          const firstKey = Object.keys(data)[0]
+          if (Array.isArray(data[firstKey]) && data[firstKey].length) {
+            message = data[firstKey][0]
+          } else if (typeof data[firstKey] === "string") {
+            message = data[firstKey]
+          }
+        }
+      } else if (err.message) {
+        // axios/network error fallback
+        message = err.message
+      }
+  
+      console.error("Error creating shipment:", err)
       setSubmitStatus({
         type: "error",
-        message: `Failed to create shipment: ${error.message}`,
+        message,
       })
     } finally {
       setIsSubmitting(false)

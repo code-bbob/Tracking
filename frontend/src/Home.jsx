@@ -1,53 +1,53 @@
-import { useState, useEffect } from 'react';
-import BarcodeScanner from './BarcodeScanner';
-import { logout } from "./redux/accessSlice"
-import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { LogOut, QrCode } from 'lucide-react';
-import { Button } from './components/ui/button';
+"use client"
 
-// API configuration
-const API_BASE_URL = 'http://localhost:8000';
+import { useState, useEffect } from "react"
+import BarcodeScanner from "./BarcodeScanner"
+import { logout } from "./redux/accessSlice"
+import { useDispatch } from "react-redux"
+import { useNavigate } from "react-router-dom"
+import { LogOut, QrCode, Plus, Scan, Truck, CheckCircle, Clock, Search, Bell, Settings } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
 function Home() {
-  const [selectedTruck, setSelectedTruck] = useState(null);
-  const [showScanner, setShowScanner] = useState(false);
-  const [userShipments, setUserShipments] = useState([]);
-  const [completedUserShipments, setCompletedUserShipments] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [userRole, setUserRole] = useState('');
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const [selectedTruck, setSelectedTruck] = useState(null)
+  const [showScanner, setShowScanner] = useState(false)
+  const [userShipments, setUserShipments] = useState([])
+  const [completedUserShipments, setCompletedUserShipments] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [userRole, setUserRole] = useState("")
+  const [searchQuery, setSearchQuery] = useState("")
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+  const backendUrl = import.meta.env.VITE_BACKEND_URL
 
   // Material type mapping for display
   const materialTypeMap = {
-    'roda': { en: 'Roda', np: 'रोडा' },
-    'baluwa': { en: 'Baluwa', np: 'बालुवा' },
-    'dhunga': { en: 'Dhunga', np: 'ढुङ्गा' },
-    'gravel': { en: 'Gravel', np: 'गिट्टी' },
-    'chips': { en: 'Chips', np: 'चिप्स' },
-    'dust': { en: 'Dust', np: 'धुलो' },
-    'mato': { en: 'Mato', np: 'माटो' },
-    'base/subbase': { en: 'Base/Subbase', np: 'बेस/सबबेस' },
-    'Itta': { en: 'Itta', np: 'इट्टा' },
-    'Kawadi': { en: 'Kawadi', np: 'कवाडी' },
-    'other': { en: 'Other', np: 'अन्य' }
-  };
+    roda: { en: "Roda", np: "रोडा" },
+    baluwa: { en: "Baluwa", np: "बालुवा" },
+    dhunga: { en: "Dhunga", np: "ढुङ्गा" },
+    gravel: { en: "Gravel", np: "गिट्टी" },
+    chips: { en: "Chips", np: "चिप्स" },
+    dust: { en: "Dust", np: "धुलो" },
+    mato: { en: "Mato", np: "माटो" },
+    "base/subbase": { en: "Base/Subbase", np: "बेस/सबबेस" },
+    Itta: { en: "Itta", np: "इट्टा" },
+    Kawadi: { en: "Kawadi", np: "कवाडी" },
+    other: { en: "Other", np: "अन्य" },
+  }
 
   const regionMap = {
-    'local': { en: 'Local', np: 'स्थानीय' },
-    'Crossborder': { en: 'Crossborder', np: 'सीमा पार' }
-  };
+    local: { en: "Local", np: "स्थानीय" },
+    Crossborder: { en: "Crossborder", np: "सीमा पार" },
+  }
 
   const vehicleSizeMap = {
-    '260 cubic feet': { en: '260 cubic feet', np: '२६० घन फिट' },
-    '160 cubic feet': { en: '160 cubic feet', np: '१६० घन फिट' },
-    '100 cubic feet': { en: '100 cubic feet', np: '१०० घन फिट' },
-    'Other': { en: 'Other', np: 'अन्य' }
-  };
+    "260 cubic feet": { en: "260 cubic feet", np: "२६० घन फिट" },
+    "160 cubic feet": { en: "160 cubic feet", np: "१६० घन फिट" },
+    "100 cubic feet": { en: "100 cubic feet", np: "१०० घन फिट" },
+    Other: { en: "Other", np: "अन्य" },
+  }
 
-  
   const handleLogout = () => {
     localStorage.removeItem("accessToken")
     localStorage.removeItem("refreshToken")
@@ -58,50 +58,46 @@ function Home() {
   // Fetch user role
   const fetchUserRole = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken")
       const response = await fetch(`${backendUrl}/enterprise/role/`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-      });
-
+      })
       if (response.ok) {
-        const role = await response.json();
-        setUserRole(role);
+        const role = await response.json()
+        setUserRole(role)
       }
     } catch (err) {
-      console.error('Error fetching user role:', err);
+      console.error("Error fetching user role:", err)
     }
-  };
+  }
 
   // Helper function to get bilingual display text
   const getBilingualText = (value, mapping) => {
-    const item = mapping[value];
-    return item ? `${item.en} | ${item.np}` : value;
-  };
+    const item = mapping[value]
+    return item ? `${item.en} | ${item.np}` : value
+  }
 
   // Fetch bills from Django backend
   const fetchBills = async () => {
     try {
-      setIsLoading(true);
+      setIsLoading(true)
       const response = await fetch(`${backendUrl}/bills/bills/`, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
-      });
-
+      })
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
-
-      const bills = await response.json();
-      console.log('Fetched bills from API:', bills);
+      const bills = await response.json()
 
       // Convert API bills to frontend format
-      const convertedBills = bills.map(bill => ({
+      const convertedBills = bills.map((bill) => ({
         id: bill.id,
         code: bill.code,
         vehicleNumber: bill.vehicle_number,
@@ -115,706 +111,580 @@ function Home() {
         remark: bill.remark,
         dateIssued: bill.date_issued,
         status: bill.status,
-        driverName: 'Driver TBD', // Default value since driver info is frontend-only
-        driverPhone: '',
-        // Legacy fields for compatibility
+        driverName: "Driver TBD",
+        driverPhone: "",
         truckNumber: bill.vehicle_number,
         billNumber: bill.code,
         cargo: bill.material,
         expectedTime: bill.eta,
-        billIssueTime: new Date(bill.date_issued).toLocaleString('en-US'),
-        progress: bill.status === 'completed' ? 100 : 5
-      }));
+        billIssueTime: new Date(bill.date_issued).toLocaleString("en-US"),
+      }))
 
       // Separate active and completed bills
-      const activeBills = convertedBills.filter(bill => bill.status === 'pending');
-      const completedBills = convertedBills.filter(bill => bill.status === 'completed');
+      const activeBills = convertedBills.filter((bill) => bill.status === "pending")
+      const completedBills = convertedBills.filter((bill) => bill.status === "completed")
 
-      setUserShipments(activeBills);
-      setCompletedUserShipments(completedBills);
+      setUserShipments(activeBills)
+      setCompletedUserShipments(completedBills)
 
-      // Also update localStorage for backward compatibility
-      localStorage.setItem('truckShipments', JSON.stringify(activeBills));
-      localStorage.setItem('completedShipments', JSON.stringify(completedBills));
-
+      localStorage.setItem("truckShipments", JSON.stringify(activeBills))
+      localStorage.setItem("completedShipments", JSON.stringify(completedBills))
     } catch (error) {
-      console.error('Error fetching bills:', error);
-      // Fall back to localStorage if API fails
-      loadFromLocalStorage();
+      console.error("Error fetching bills:", error)
+      loadFromLocalStorage()
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   // Fallback to localStorage
   const loadFromLocalStorage = () => {
-    const saved = localStorage.getItem('truckShipments');
-    const savedCompleted = localStorage.getItem('completedShipments');
+    const saved = localStorage.getItem("truckShipments")
+    const savedCompleted = localStorage.getItem("completedShipments")
     if (saved) {
-      setUserShipments(JSON.parse(saved));
+      setUserShipments(JSON.parse(saved))
     }
     if (savedCompleted) {
-      setCompletedUserShipments(JSON.parse(savedCompleted));
+      setCompletedUserShipments(JSON.parse(savedCompleted))
     }
-  };
+  }
 
   // Load shipments on component mount
   useEffect(() => {
-    fetchBills();
-    fetchUserRole();
-    
-    // Listen for storage changes (when new shipments are added)
+    fetchBills()
+    fetchUserRole()
+
     const handleStorageChange = () => {
-      fetchBills(); // Refresh from API when storage changes
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Also check for changes when the window regains focus
-    window.addEventListener('focus', fetchBills);
-    
+      fetchBills()
+    }
+
+    window.addEventListener("storage", handleStorageChange)
+    window.addEventListener("focus", fetchBills)
+
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('focus', fetchBills);
-    };
-  }, []);
+      window.removeEventListener("storage", handleStorageChange)
+      window.removeEventListener("focus", fetchBills)
+    }
+  }, [])
 
   // Update bill status via API
-  const updateBillStatus = async (billId, newStatus) => {
+  const updateBillStatus = async (billId, newStatus, scannedCode) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/bills/bills/${billId}/`, {
-        method: 'PATCH',
+      const response = await fetch(`${backendUrl}/bills/bills/${billId}/`, {
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({ status: newStatus }),
-      });
-
+      })
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
-
-      return await response.json();
+      return await response.json()
     } catch (error) {
-      console.error('Error updating bill status:', error);
-      throw error;
+      console.error("Error updating bill status:", error)
+      throw error
     }
-  };
+  }
 
-  // Default demo data (kept for demonstration)
-  const defaultIssuedTrucks = [
-    {
-      id: 'demo1',
-      truckNumber: 'TRK123',
-      billNumber: 'BILL001',
-      cargo: 'Electronics',
-      driverName: 'John Doe',
-      destination: 'New York',
-      expectedTime: '2025-07-22 10:00 AM',
-      billIssueTime: '2025-07-21 08:00 AM',
-      status: 'In Transit',
-      progress: 65
-    },
-    {
-      id: 'demo2',
-      truckNumber: 'TRK124',
-      billNumber: 'BILL002',
-      cargo: 'Furniture',
-      driverName: 'Jane Smith',
-      destination: 'Los Angeles',
-      expectedTime: '2025-07-20 02:00 PM',
-      billIssueTime: '2025-07-21 09:00 AM',
-      status: 'Loading',
-      progress: 15
-    }
-  ];
-
-  const defaultCompletedTrucks = [
-    {
-      id: 'demo3',
-      truckNumber: 'TRK125',
-      billNumber: 'BILL003',
-      cargo: 'Clothing',
-      driverName: 'Mike Johnson',
-      destination: 'Chicago',
-      expectedTime: '2025-07-20 05:00 PM',
-      billIssueTime: '2025-07-19 07:00 AM',
-      status: 'Delivered',
-      progress: 100,
-      completedTime: '2025-07-20 04:45 PM'
-    }
-  ];
-
-  // Combine API data with demo data
-  const issuedTrucks = [...userShipments, ...defaultIssuedTrucks];
-  const completedTrucks = [...completedUserShipments, ...defaultCompletedTrucks];
+  const issuedTrucks = userShipments
+  const completedTrucks = completedUserShipments
 
   const handleTruckClick = (truck) => {
-    setSelectedTruck(truck);
-  };
+    setSelectedTruck(truck)
+  }
 
   const closeDetails = () => {
-    setSelectedTruck(null);
-  };
+    setSelectedTruck(null)
+  }
 
   const handleScan = async (scannedCode) => {
-    // First check if the scanned code is in issued trucks (both API and demo)
-    const foundInIssued = issuedTrucks.find(truck => 
-      (truck.billNumber && truck.billNumber.toLowerCase() === scannedCode.toLowerCase()) ||
-      (truck.code && truck.code.toLowerCase() === scannedCode.toLowerCase())
-    );
-    
+    const foundInIssued = issuedTrucks.find(
+      (truck) =>
+        (truck.billNumber && truck.billNumber.toLowerCase() === scannedCode.toLowerCase()) ||
+        (truck.code && truck.code.toLowerCase() === scannedCode.toLowerCase()),
+    )
+
     if (foundInIssued) {
       try {
-        // If it's from API (has backend ID), update via API
-        if (foundInIssued.id && !isNaN(foundInIssued.id)) {
-          await updateBillStatus(foundInIssued.id, 'completed');
-          // Refresh data from API
-          await fetchBills();
-          setShowScanner(false);
-          alert(`✅ Shipment ${foundInIssued.code || foundInIssued.billNumber} marked as completed!`);
-        } else {
-          // It's demo data - handle locally
-          const completedShipment = {
-            ...foundInIssued,
-            status: 'completed',
-            progress: 100,
-            completedTime: new Date().toLocaleString('en-US')
-          };
-          setShowScanner(false);
-          setSelectedTruck(completedShipment);
-        }
+        await updateBillStatus(foundInIssued.id, "completed")
+        await fetchBills()
+        setShowScanner(false)
+        setSelectedTruck({
+          ...foundInIssued,
+          status: "completed",
+          completedTime: new Date().toLocaleString("en-US"),
+        })
       } catch (error) {
-        console.error('Error updating shipment status:', error);
-        alert('Failed to update shipment status. Please try again.');
-        setShowScanner(false);
+        console.error("Error updating shipment status:", error)
+        setShowScanner(false)
       }
     } else {
-      // Check if it's already in completed
-      const foundInCompleted = completedTrucks.find(truck => 
-        (truck.billNumber && truck.billNumber.toLowerCase() === scannedCode.toLowerCase()) ||
-        (truck.code && truck.code.toLowerCase() === scannedCode.toLowerCase())
-      );
-      
+      const foundInCompleted = completedTrucks.find(
+        (truck) =>
+          (truck.billNumber && truck.billNumber.toLowerCase() === scannedCode.toLowerCase()) ||
+          (truck.code && truck.code.toLowerCase() === scannedCode.toLowerCase()),
+      )
+
       if (foundInCompleted) {
-        setSelectedTruck(foundInCompleted);
-        setShowScanner(false);
-        alert(`ℹ️ Shipment ${foundInCompleted.billNumber || foundInCompleted.code} is already completed.`);
+        setSelectedTruck(foundInCompleted)
+        setShowScanner(false)
       } else {
-        alert(`❌ No shipment found with bill number: ${scannedCode}`);
-        setShowScanner(false);
+        setShowScanner(false)
       }
     }
-  };
+  }
 
   const generateBarcode = (billNumber) => {
-    return `||||| || ||| | |||| ||| |||| | ||| ||||`;
-  };
+    return `||||| || ||| | |||| ||| |||| | ||| ||||`
+  }
 
   const isOverdue = (expectedTime) => {
-    const now = new Date('2025-07-21T12:00:00'); // Current time
-    const expected = new Date(expectedTime);
-    return now > expected;
-  };
+    const now = new Date("2025-07-21T12:00:00")
+    const expected = new Date(expectedTime)
+    return now > expected
+  }
 
-  const getStatusStyles = (status, isOverdueShipment = false) => {
-    if (isOverdueShipment) {
-      return 'bg-red-100 text-red-800 border-red-200';
-    }
-    
-    switch (status.toLowerCase().replace(' ', '-')) {
-      case 'pending':
-      case 'in-transit':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'loading':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'departed':
-        return 'bg-cyan-100 text-cyan-800 border-cyan-200';
-      case 'completed':
-      case 'delivered':
-        return 'bg-green-100 text-green-800 border-green-200';
+  const getStatusColor = (status, isOverdueShipment = false, region = "") => {
+    if (isOverdueShipment) return "text-red-600 bg-red-50"
+    if (region && region.toLowerCase() === "local") return "text-yellow-700 bg-yellow-50"
+
+    switch (status.toLowerCase()) {
+      case "pending":
+        return "text-blue-600 bg-blue-50"
+      case "loading":
+        return "text-orange-600 bg-orange-50"
+      case "departed":
+        return "text-purple-600 bg-purple-50"
+      case "completed":
+        return "text-green-600 bg-green-50"
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return "text-gray-600 bg-gray-50"
     }
-  };
+  }
 
   const formatDateTime = (dateTime) => {
-    const date = new Date(dateTime);
-    return {
-      date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      time: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    };
-  };
+    const date = new Date(dateTime)
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+  }
 
-  // Mobile Card Component for responsive design
-  const TruckCard = ({ truck, isCompleted = false }) => {
-    const overdueShipment = !isCompleted && isOverdue(truck.expectedTime || truck.eta);
-    const displayMaterial = truck.material ? getBilingualText(truck.material, materialTypeMap) : truck.cargo;
-    const billNumber = truck.code || truck.billNumber;
-    const vehicleNumber = truck.vehicleNumber || truck.truckNumber;
-    
+  // Compact Bill Card Component
+  const CompactBillCard = ({ truck, isCompleted = false }) => {
+    const overdueShipment = !isCompleted && isOverdue(truck.expectedTime || truck.eta)
+    const displayMaterial = truck.material ? getBilingualText(truck.material, materialTypeMap) : truck.cargo
+    const billNumber = truck.code || truck.billNumber
+    const vehicleNumber = truck.vehicleNumber || truck.truckNumber
+    const isLocal = truck.region && truck.region.toLowerCase() === "local"
+
     return (
-      <div 
-        className={`border rounded-xl p-4 cursor-pointer hover:shadow-lg transition-all duration-200 ${
-          overdueShipment 
-            ? 'bg-gradient-to-r from-red-50 to-pink-50 border-red-200 shadow-red-100' 
-            : 'bg-white/80 backdrop-blur-sm border-gray-200 hover:bg-white'
-        }`}
+      <div
+        className={`p-3 border rounded-lg cursor-pointer hover:shadow-sm transition-all duration-150 ${
+          isLocal ? "bg-yellow-50 border-yellow-200" : "bg-white border-gray-200"
+        } ${overdueShipment ? "border-red-300 bg-red-50" : ""}`}
         onClick={() => handleTruckClick(truck)}
       >
-      
-        <div className="flex justify-between items-start mb-2">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-gray-900 text-sm">{vehicleNumber}</h3>
-              {overdueShipment && <span className="text-red-500 text-xs">⚠️ OVERDUE</span>}
-            </div>
-            <p className="text-xs text-gray-600 font-mono">{billNumber}</p>
-            {truck.vehicleSize && (
-              <p className="text-xs text-gray-500">{getBilingualText(truck.vehicleSize, vehicleSizeMap)}</p>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div className="font-semibold text-sm text-gray-900">{vehicleNumber}</div>
+            {overdueShipment && <div className="w-2 h-2 bg-red-500 rounded-full"></div>}
+            {isLocal && <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>}
+          </div>
+          <div
+            className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(truck.status, overdueShipment, truck.region)}`}
+          >
+            {truck.status}
+          </div>
+        </div>
+
+        <div className="space-y-1 text-xs text-gray-600">
+          <div className="flex justify-between">
+            <span className="truncate flex-1 mr-2">{displayMaterial}</span>
+            {truck.amount && (
+              <span className="font-medium">Rs. {truck.amount}</span>
             )}
           </div>
-          <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${getStatusStyles(truck.status, overdueShipment)}`}>
-            {truck.status}
-          </span>
-        </div>
-        
-        <div className="space-y-1 text-xs">
-          <div className="grid grid-cols-2 gap-2">
-            <div><span className="text-gray-500">Material:</span> {displayMaterial}</div>
-            <div><span className="text-gray-500">Driver:</span> {truck.driverName}</div>
+          <div className="flex justify-between">
+            
+          <div className="truncate">{formatDateTime(truck.dateIssued)}</div>
+          <div className="truncate">{truck.destination}</div>
+          <div className="truncate">{formatDateTime(truck.completedTime ? truck.completedTime : truck.expectedTime || truck.eta) || "TBD"}</div>
           </div>
-          <div><span className="text-gray-500">To:</span> {truck.destination}</div>
-          {truck.region && (
-            <div><span className="text-gray-500">Region:</span> {getBilingualText(truck.region, regionMap)}</div>
-          )}
-          {truck.amount && (
-            <div><span className="text-gray-500">Amount:</span> NPR {parseFloat(truck.amount).toLocaleString()}</div>
-          )}
+          {userRole === "Admin" && <div className="font-mono text-gray-500">{billNumber}</div>}
         </div>
-        
-        {!isCompleted ? (
-          <div className="mt-2">
-            <div className="flex justify-between text-xs text-gray-500 mb-1">
-              <span>Progress</span>
-              <span>{truck.progress}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-1.5">
-              <div 
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  overdueShipment ? 'bg-red-500' : 'bg-blue-500'
-                }`}
-                style={{width: `${truck.progress}%`}}
-              ></div>
-            </div>
-          </div>
-        ) : (
+
+        {isCompleted && (
           <div className="mt-2 text-xs text-green-600 font-medium">
-            ✓ {formatDateTime(truck.completedTime || truck.dateIssued).date} {formatDateTime(truck.completedTime || truck.dateIssued).time}
+            ✓ {formatDateTime(truck.completedTime || truck.dateIssued)}
           </div>
         )}
       </div>
-    );
-  };
+    )
+  }
 
-  // Desktop Table Row Component
-  const TruckRow = ({ truck, isCompleted = false }) => {
-    const overdueShipment = !isCompleted && isOverdue(truck.expectedTime || truck.eta);
-    const displayMaterial = truck.material ? getBilingualText(truck.material, materialTypeMap) : truck.cargo;
-    const billNumber = truck.code || truck.billNumber;
-    const vehicleNumber = truck.vehicleNumber || truck.truckNumber;
-    
-    return (
-      <tr 
-        className={`cursor-pointer transition-colors ${
-          overdueShipment 
-            ? 'bg-red-50 hover:bg-red-100 border-l-4 border-l-red-500' 
-            : 'hover:bg-gray-50'
-        }`}
-        onClick={() => handleTruckClick(truck)}
-      >
-        <td className="px-3 py-2 text-sm font-medium text-gray-900">
-          <div className="flex items-center gap-2">
-            <div>
-              <div>{vehicleNumber}</div>
-              {truck.vehicleSize && (
-                <div className="text-xs text-gray-500">{getBilingualText(truck.vehicleSize, vehicleSizeMap)}</div>
-              )}
-            </div>
-            {overdueShipment && <span className="text-red-500 text-xs">⚠️</span>}
-          </div>
-        </td>
-        <td className="px-3 py-2 text-sm text-gray-600 font-mono">{billNumber}</td>
-        <td className="px-3 py-2 text-sm text-gray-600">
-          <div>{displayMaterial}</div>
-          {truck.region && (
-            <div className="text-xs text-gray-500">{getBilingualText(truck.region, regionMap)}</div>
-          )}
-        </td>
-        <td className="px-3 py-2 text-sm text-gray-600">
-          <div>{truck.destination}</div>
-          {truck.amount && (
-            <div className="text-xs text-gray-500">NPR {parseFloat(truck.amount).toLocaleString()}</div>
-          )}
-        </td>
-        <td className="px-3 py-2">
-          <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${getStatusStyles(truck.status, overdueShipment)}`}>
-            {truck.status}
-          </span>
-        </td>
-        <td className="px-3 py-2">
-          {!isCompleted ? (
-            <div className="flex items-center space-x-2">
-              <div className="w-12 bg-gray-200 rounded-full h-1.5">
-                <div 
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    overdueShipment ? 'bg-red-500' : 'bg-blue-500'
-                  }`}
-                  style={{width: `${truck.progress}%`}}
-                ></div>
-              </div>
-              <span className="text-xs text-gray-500 font-medium min-w-[30px] text-right">{truck.progress}%</span>
-            </div>
-          ) : (
-            <div className="text-xs text-green-600 font-medium text-center">
-              <div>{formatDateTime(truck.completedTime || truck.dateIssued).date}</div>
-              <div className="text-gray-500">{formatDateTime(truck.completedTime || truck.dateIssued).time}</div>
-            </div>
-          )}
-        </td>
-      </tr>
-    );
-  };
+  // Filter bills based on search query
+  const filterBills = (bills) => {
+    if (!searchQuery) return bills
+    return bills.filter(
+      (bill) =>
+        (bill.vehicleNumber || bill.truckNumber || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (bill.destination || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (bill.material || bill.cargo || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (bill.code || bill.billNumber || "").toLowerCase().includes(searchQuery.toLowerCase()),
+    )
+  }
+
+  const filteredIssuedTrucks = filterBills(issuedTrucks)
+  const filteredCompletedTrucks = filterBills(completedTrucks)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      
-      {/* Header */}
-      <div className="bg-white/90 backdrop-blur-sm shadow-sm border-b border-gray-200 sticky top-0 z-40">
-        <div className="px-3 py-3 sm:px-4 sm:py-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
-            <h1 className="text-lg sm:text-xl font-bold text-gray-900">
-              Truck Dashboard | ट्रक ड्यासबोर्ड
-            </h1>
-            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-              <button
-                onClick={() => setShowScanner(true)}
-                className="flex-1 sm:flex-none bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-2 rounded-lg hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
-              >
-                <span>📱</span>
-                Scan | स्क्यान
-              </button>
-              <a 
-                href="/add-shipment" 
-                className="flex-1 sm:flex-none bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-2 rounded-lg hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium transition-all duration-200 text-center shadow-md hover:shadow-lg"
-              >
-                + Add | थप्नुहोस्
-              </a>
-              {userRole === 'Admin' && (
-                <a 
-                  href="/issue-barcodes" 
-                  className="flex-1 sm:flex-none bg-gradient-to-r from-purple-600 to-violet-600 text-white px-3 py-2 rounded-lg hover:from-purple-700 hover:to-violet-700 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-medium transition-all duration-200 text-center shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-                >
-                  <QrCode size={16} />
-                  Issue Codes
-                </a>
-              )}
+    <div className="min-h-screen bg-gray-50">
+      {/* Enhanced Professional Navbar */}
+      <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo and Brand */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <Truck className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-bold text-gray-900">TruckFlow</h1>
+                  <p className="text-xs text-gray-500 -mt-1">Dashboard</p>
+                </div>
+              </div>
+
+              {/* Stats Pills */}
+              <div className="hidden md:flex items-center gap-3 ml-6">
+                <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full">
+                  <Clock className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-medium text-blue-700">{filteredIssuedTrucks.length}</span>
+                  <span className="text-xs text-blue-600">Active</span>
+                </div>
+                <div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-medium text-green-700">{filteredCompletedTrucks.length}</span>
+                  <span className="text-xs text-green-600">Done</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Search Bar */}
+            <div className="hidden md:flex flex-1 max-w-md mx-8">
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Search vehicles, destinations, materials..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 py-2 w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
+              {/* Mobile Stats */}
+              <div className="md:hidden flex items-center gap-2 mr-2">
+                <div className="bg-blue-50 px-2 py-1 rounded text-xs font-medium text-blue-700">
+                  {filteredIssuedTrucks.length}
+                </div>
+                <div className="bg-green-50 px-2 py-1 rounded text-xs font-medium text-green-700">
+                  {filteredCompletedTrucks.length}
+                </div>
+              </div>
+
               <Button
-            onClick={handleLogout}
-            className=" top-full hover:bg-red-600 text-white"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Logout
-          </Button>
-              {/* Stats */}
-              {!isLoading && (
-                <div className="flex space-x-4 bg-white/80 backdrop-blur-sm rounded-lg px-4 py-2 border border-gray-200">
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold text-blue-600">{issuedTrucks.length}</div>
-                    <div className="text-xs text-gray-500">Active</div>
-                  </div>
-                  <div className="w-px bg-gray-300"></div>
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold text-green-600">{completedTrucks.length}</div>
-                    <div className="text-xs text-gray-500">Done</div>
-                  </div>
-                </div>
+                size="sm"
+                onClick={() => setShowScanner(true)}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <Scan className="h-4 w-4 md:mr-2" />
+                <span className="hidden md:inline">Scan</span>
+              </Button>
+
+              <Button size="sm" asChild>
+                <a href="/add-shipment">
+                  <Plus className="h-4 w-4 md:mr-2" />
+                  <span className="hidden md:inline">Add</span>
+                </a>
+              </Button>
+
+              {userRole === "Admin" && (
+                <Button size="sm" variant="outline" asChild>
+                  <a href="/issue-barcodes">
+                    <QrCode className="h-4 w-4 md:mr-2" />
+                    <span className="hidden md:inline">Codes</span>
+                  </a>
+                </Button>
               )}
-              {/* Loading indicator */}
-              {isLoading && (
-                <div className="flex items-center text-gray-500 bg-white/80 backdrop-blur-sm rounded-lg px-3 py-2 border border-gray-200">
-                  <svg className="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span className="text-xs">Loading...</span>
-                </div>
-              )}
+
+              {/* User Menu */}
+              <div className="flex items-center gap-2 ml-2 pl-2 border-l border-gray-200">
+                <Button size="sm" variant="ghost" className="p-2">
+                  <Bell className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant="ghost" className="p-2">
+                  <Settings className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleLogout}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Search */}
+          <div className="md:hidden pb-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2 w-full"
+              />
             </div>
           </div>
         </div>
-      </div>
+      </nav>
 
-      {/* Main Content - Full Width */}
-      <div className="px-2 py-4 sm:px-4 sm:py-6 space-y-6">
-        {/* Active Shipments */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200">
-          <div className="px-3 py-3 sm:px-4 sm:py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center">
-              🚛 Active Shipments | सक्रिय ढुवानी
-              <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded-full shadow-sm">
-                {issuedTrucks.length}
-              </span>
-            </h2>
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto p-4">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="flex items-center gap-2 text-gray-500">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+              <span>Loading shipments...</span>
+            </div>
           </div>
-          
-          {/* Desktop Table View */}
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle | गाडी</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bill | बिल</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material | सामग्री</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Destination | गन्तव्य</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status | स्थिति</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress | प्रगति</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {issuedTrucks.map((truck) => (
-                  <TruckRow key={truck.id} truck={truck} />
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          {/* Mobile Card View */}
-          <div className="sm:hidden p-2 space-y-2">
-            {issuedTrucks.map((truck) => (
-              <TruckCard key={truck.id} truck={truck} />
-            ))}
-          </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Active Shipments */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-blue-600" />
+                  Active Shipments
+                </h2>
+                <div className="text-sm text-gray-500">{filteredIssuedTrucks.length} bills</div>
+              </div>
 
-        {/* Completed Shipments */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200">
-          <div className="px-3 py-3 sm:px-4 sm:py-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50 rounded-t-xl">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center">
-              ✅ Completed Shipments | सम्पन्न ढुवानी
-              <span className="ml-2 bg-green-100 text-green-800 text-xs font-medium px-2.5 py-1 rounded-full shadow-sm">
-                {completedTrucks.length}
-              </span>
-            </h2>
+              <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
+                {filteredIssuedTrucks.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Truck className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">No active shipments found</p>
+                  </div>
+                ) : (
+                  filteredIssuedTrucks.map((truck) => <CompactBillCard key={truck.id} truck={truck} />)
+                )}
+              </div>
+            </div>
+
+            {/* Completed Shipments */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  Completed Shipments
+                </h2>
+                <div className="text-sm text-gray-500">{filteredCompletedTrucks.length} bills</div>
+              </div>
+
+              <div className="space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
+                {filteredCompletedTrucks.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <CheckCircle className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">No completed shipments found</p>
+                  </div>
+                ) : (
+                  filteredCompletedTrucks.map((truck) => (
+                    <CompactBillCard key={truck.id} truck={truck} isCompleted={true} />
+                  ))
+                )}
+              </div>
+            </div>
           </div>
-          
-          {/* Desktop Table View */}
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle | गाडी</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bill | बिल</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material | सामग्री</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Destination | गन्तव्य</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status | स्थिति</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completed | सम्पन्न</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {completedTrucks.map((truck) => (
-                  <TruckRow key={truck.id} truck={truck} isCompleted={true} />
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          {/* Mobile Card View */}
-          <div className="sm:hidden p-2 space-y-2">
-            {completedTrucks.map((truck) => (
-              <TruckCard key={truck.id} truck={truck} isCompleted={true} />
-            ))}
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Barcode Scanner Modal */}
-      {showScanner && (
-        <BarcodeScanner
-          onScan={handleScan}
-          onClose={() => setShowScanner(false)}
-        />
-      )}
+      {showScanner && <BarcodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />}
 
-      {/* Enhanced Modal with all Bill fields */}
+      {/* Shipment Details Modal */}
       {selectedTruck && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-2" onClick={closeDetails}>
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center p-4 border-b">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Shipment Details | ढुवानी विवरण
-              </h2>
-              <button 
-                className="text-gray-400 hover:text-gray-600 text-xl w-8 h-8 flex items-center justify-center"
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4"
+          onClick={closeDetails}
+        >
+          <div
+            className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center p-6 border-b">
+              <h2 className="text-xl font-semibold text-gray-900">Shipment Details</h2>
+              <button
+                className="text-gray-400 hover:text-gray-600 text-2xl w-8 h-8 flex items-center justify-center"
                 onClick={closeDetails}
               >
                 ×
               </button>
             </div>
-            
-            <div className="p-4">
-              <div className="space-y-4">
-                {/* Basic Information */}
-                <div className="border-b pb-4">
-                  <h3 className="text-md font-medium text-gray-800 mb-3">
-                    Basic Information | आधारभूत जानकारी
-                  </h3>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <label className="text-xs font-medium text-gray-500 uppercase">Vehicle | गाडी</label>
-                      <div className="font-mono font-semibold">{selectedTruck.vehicleNumber || selectedTruck.truckNumber}</div>
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-500 uppercase">Bill Code | बिल कोड</label>
-                      <div className="font-mono">{selectedTruck.code || selectedTruck.billNumber}</div>
-                    </div>
-                    {selectedTruck.issueLocation && (
-                      <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase">Issue Location | जारी स्थान</label>
-                        <div>{selectedTruck.issueLocation}</div>
-                      </div>
-                    )}
-                    <div>
-                      <label className="text-xs font-medium text-gray-500 uppercase">Status | स्थिति</label>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${getStatusStyles(selectedTruck.status, !selectedTruck.completedTime && isOverdue(selectedTruck.expectedTime || selectedTruck.eta))}`}>
-                        {selectedTruck.status}
-                      </span>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Material & Vehicle Information */}
-                <div className="border-b pb-4">
-                  <h3 className="text-md font-medium text-gray-800 mb-3">
-                    Material & Vehicle | सामग्री र गाडी
-                  </h3>
-                  <div className="grid grid-cols-1 gap-3 text-sm">
-                    <div>
-                      <label className="text-xs font-medium text-gray-500 uppercase">Material | सामग्री</label>
-                      <div>{selectedTruck.material ? getBilingualText(selectedTruck.material, materialTypeMap) : selectedTruck.cargo}</div>
-                    </div>
-                    {selectedTruck.vehicleSize && (
-                      <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase">Vehicle Size | गाडी साइज</label>
-                        <div>{getBilingualText(selectedTruck.vehicleSize, vehicleSizeMap)}</div>
-                      </div>
-                    )}
-                    {selectedTruck.region && (
-                      <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase">Region | क्षेत्र</label>
-                        <div>{getBilingualText(selectedTruck.region, regionMap)}</div>
-                      </div>
-                    )}
-                    <div>
-                      <label className="text-xs font-medium text-gray-500 uppercase">Destination | गन्तव्य</label>
-                      <div>{selectedTruck.destination}</div>
+            <div className="p-6 space-y-6">
+              {/* Basic Information */}
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">Vehicle Number</label>
+                    <div className="text-lg font-mono font-semibold">
+                      {selectedTruck.vehicleNumber || selectedTruck.truckNumber}
                     </div>
                   </div>
-                </div>
-
-                {/* Driver Information */}
-                {(selectedTruck.driverName || selectedTruck.driverPhone) && (
-                  <div className="border-b pb-4">
-                    <h3 className="text-md font-medium text-gray-800 mb-3">
-                      Driver Information | चालक जानकारी
-                    </h3>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      {selectedTruck.driverName && (
-                        <div>
-                          <label className="text-xs font-medium text-gray-500 uppercase">Driver | चालक</label>
-                          <div>{selectedTruck.driverName}</div>
-                        </div>
-                      )}
-                      {selectedTruck.driverPhone && (
-                        <div>
-                          <label className="text-xs font-medium text-gray-500 uppercase">Phone | फोन</label>
-                          <div className="font-mono">{selectedTruck.driverPhone}</div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Financial Information */}
-                {selectedTruck.amount && (
-                  <div className="border-b pb-4">
-                    <h3 className="text-md font-medium text-gray-800 mb-3">
-                      Financial Information | आर्थिक जानकारी
-                    </h3>
+                  {userRole === "Admin" && (
                     <div>
-                      <label className="text-xs font-medium text-gray-500 uppercase">Amount | रकम</label>
-                      <div className="text-lg font-semibold text-green-600">
-                        NPR {parseFloat(selectedTruck.amount).toLocaleString()}
-                      </div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Bill Code</label>
+                      <div className="text-lg font-mono">{selectedTruck.code || selectedTruck.billNumber}</div>
                     </div>
+                  )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">Status</label>
+                    <span
+                      className={`inline-flex items-center px-3 py-1 rounded-md text-sm font-medium ${getStatusColor(selectedTruck.status, !selectedTruck.completedTime && isOverdue(selectedTruck.expectedTime || selectedTruck.eta), selectedTruck.region)}`}
+                    >
+                      {selectedTruck.status}
+                    </span>
                   </div>
-                )}
-
-                {/* Time Information */}
-                <div className="border-b pb-4">
-                  <h3 className="text-md font-medium text-gray-800 mb-3">
-                    Time Information | समय जानकारी
-                  </h3>
-                  <div className="grid grid-cols-1 gap-2 text-sm">
+                  {selectedTruck.issueLocation && (
                     <div>
-                      <label className="text-xs font-medium text-gray-500 uppercase">Expected Arrival | अपेक्षित आगमन</label>
-                      <div className={isOverdue(selectedTruck.expectedTime || selectedTruck.eta) && !selectedTruck.completedTime ? 'text-red-600 font-medium' : ''}>
-                        {selectedTruck.eta || selectedTruck.expectedTime}
-                      </div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Issue Location</label>
+                      <div>{selectedTruck.issueLocation}</div>
                     </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-500 uppercase">Date Issued | जारी मिति</label>
-                      <div>{selectedTruck.dateIssued ? new Date(selectedTruck.dateIssued).toLocaleString() : selectedTruck.billIssueTime}</div>
-                    </div>
-                    {selectedTruck.completedTime && (
-                      <div>
-                        <label className="text-xs font-medium text-gray-500 uppercase">Completed | सम्पन्न</label>
-                        <div className="text-green-600 font-medium">{selectedTruck.completedTime}</div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Additional Information */}
-                {selectedTruck.remark && (
-                  <div className="border-b pb-4">
-                    <h3 className="text-md font-medium text-gray-800 mb-3">
-                      Additional Information | अतिरिक्त जानकारी
-                    </h3>
-                    <div>
-                      <label className="text-xs font-medium text-gray-500 uppercase">Remarks | टिप्पणी</label>
-                      <div className="text-sm text-gray-700 bg-gray-50 p-2 rounded">{selectedTruck.remark}</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              {/* Barcode */}
-              <div className="border-t pt-4 mt-4">
-                <div className="bg-gray-50 p-3 rounded-lg text-center">
-                  <div className="font-mono text-sm tracking-wider text-gray-800 mb-1">
-                    {generateBarcode(selectedTruck.code || selectedTruck.billNumber)}
-                  </div>
-                  <div className="text-xs font-medium text-gray-600">{selectedTruck.code || selectedTruck.billNumber}</div>
+                  )}
                 </div>
               </div>
+
+              {/* Material & Transport Details */}
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Transport Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">Material</label>
+                    <div>
+                      {selectedTruck.material
+                        ? getBilingualText(selectedTruck.material, materialTypeMap)
+                        : selectedTruck.cargo}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">Destination</label>
+                    <div>{selectedTruck.destination}</div>
+                  </div>
+                  {selectedTruck.vehicleSize && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Vehicle Size</label>
+                      <div>{getBilingualText(selectedTruck.vehicleSize, vehicleSizeMap)}</div>
+                    </div>
+                  )}
+                  {selectedTruck.region && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Region</label>
+                      <div
+                        className={selectedTruck.region.toLowerCase() === "local" ? "text-yellow-700 font-medium" : ""}
+                      >
+                        {getBilingualText(selectedTruck.region, regionMap)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Financial Information */}
+              {selectedTruck.amount && (
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Financial Information</h3>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">Amount</label>
+                    <div className="text-2xl font-bold text-green-600">
+                      NPR {Number.parseFloat(selectedTruck.amount).toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Time Information */}
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Time Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">Expected Arrival</label>
+                    <div
+                      className={
+                        isOverdue(selectedTruck.expectedTime || selectedTruck.eta) && !selectedTruck.completedTime
+                          ? "text-red-600 font-medium"
+                          : ""
+                      }
+                    >
+                      {selectedTruck.eta || selectedTruck.expectedTime}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">Date Issued</label>
+                    <div>
+                      {selectedTruck.dateIssued
+                        ? new Date(selectedTruck.dateIssued).toLocaleString()
+                        : selectedTruck.billIssueTime}
+                    </div>
+                  </div>
+                  {selectedTruck.completedTime && (
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-500 mb-1">Completed</label>
+                      <div className="text-green-600 font-medium">{selectedTruck.completedTime}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Additional Information */}
+              {selectedTruck.remark && (
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Additional Information</h3>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 mb-1">Remarks</label>
+                    <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">{selectedTruck.remark}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Barcode - Only show for Admin */}
+              {userRole === "Admin" && (
+                <div className="border-t pt-6">
+                  <div className="bg-gray-50 p-4 rounded-lg text-center">
+                    <div className="font-mono text-sm tracking-wider text-gray-800 mb-2">
+                      {generateBarcode(selectedTruck.code || selectedTruck.billNumber)}
+                    </div>
+                    <div className="text-sm font-medium text-gray-600">
+                      {selectedTruck.code || selectedTruck.billNumber}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
     </div>
-  );
+  )
 }
 
-export default Home;
+export default Home

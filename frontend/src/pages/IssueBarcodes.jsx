@@ -20,7 +20,7 @@ import { useNavigate } from 'react-router-dom';
 const IssueBarcodes = () => {
   const [persons, setPersons] = useState([]);
   const [selectedAssignedTo, setSelectedAssignedTo] = useState('');
-  const [selectedAssignedBy, setSelectedAssignedBy] = useState('');
+  // const [selectedAssignedBy, setSelectedAssignedBy] = useState('');
   const [count, setCount] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingPersons, setIsLoadingPersons] = useState(true);
@@ -97,11 +97,11 @@ const IssueBarcodes = () => {
     setError('');
     setSuccess('');
 
-    if (!selectedAssignedTo || !selectedAssignedBy) {
-      setError('Please select both assigned to and assigned by persons.');
-      setIsLoading(false);
-      return;
-    }
+    // if (!selectedAssignedTo || !selectedAssignedBy) {
+    //   setError('Please select both assigned to and assigned by persons.');
+    //   setIsLoading(false);
+    //   return;
+    // }
 
     if (count < 1 || count > 1000) {
       setError('Count must be between 1 and 1000.');
@@ -119,7 +119,6 @@ const IssueBarcodes = () => {
         },
         body: JSON.stringify({
           assigned_to: selectedAssignedTo,
-          assigned_by: selectedAssignedBy,
           count: parseInt(count),
         }),
       });
@@ -131,7 +130,6 @@ const IssueBarcodes = () => {
         setIssuedCodes(data.issued_codes);
         // Reset form
         setSelectedAssignedTo('');
-        setSelectedAssignedBy('');
         setCount(1);
       } else {
         setError(data.error || 'Failed to issue barcodes.');

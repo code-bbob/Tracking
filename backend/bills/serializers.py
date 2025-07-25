@@ -37,6 +37,7 @@ class BillSerializer(serializers.ModelSerializer):
         code = validated_data.get('code')
         if code:
             barcode = Barcode.objects.get(code=code)
+            print("barcode", barcode)
             if barcode and barcode.status == 'active':
                 if status == 'completed':
                     barcode.status = 'used'
@@ -45,9 +46,11 @@ class BillSerializer(serializers.ModelSerializer):
                 else:
                     raise serializers.ValidationError("Invalid status for bill.")
                 barcode.save()
+                print(barcode.status)
             else:
                 raise serializers.ValidationError("Barcode is either not issued or already expired.")
-
+        else:
+            raise serializers.ValidationError("Barcode code is required for updating the bill.")
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
