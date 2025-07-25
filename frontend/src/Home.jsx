@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from "react"
 import BarcodeScanner from "./BarcodeScanner"
+import Navbar from "./components/Navbar"
 import { logout } from "./redux/accessSlice"
 import { useDispatch } from "react-redux"
 import { useNavigate } from "react-router-dom"
-import { LogOut, QrCode, Plus, Scan, Truck, CheckCircle, Clock, Search, Bell, Settings } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { CheckCircle, Clock, Truck } from "lucide-react"
 
 function Home() {
   const [selectedTruck, setSelectedTruck] = useState(null)
@@ -170,13 +169,14 @@ function Home() {
   // Update bill status via API
   const updateBillStatus = async (billId, newStatus, scannedCode) => {
     try {
+      console.log("HERE WUTH BILL ID", billId, "NEW STATUS", newStatus, "SCANNED CODE", scannedCode)
       const response = await fetch(`${backendUrl}/bills/bills/${billId}/`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status: newStatus, code: scannedCode }),
       })
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -208,7 +208,7 @@ function Home() {
 
     if (foundInIssued) {
       try {
-        await updateBillStatus(foundInIssued.id, "completed")
+        await updateBillStatus(foundInIssued.id, "completed", scannedCode)
         await fetchBills()
         setShowScanner(false)
         setSelectedTruck({
@@ -333,122 +333,14 @@ function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Enhanced Professional Navbar */}
-      <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo and Brand */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <Truck className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-lg font-bold text-gray-900">TruckFlow</h1>
-                  <p className="text-xs text-gray-500 -mt-1">Dashboard</p>
-                </div>
-              </div>
-
-              {/* Stats Pills */}
-              <div className="hidden md:flex items-center gap-3 ml-6">
-                <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full">
-                  <Clock className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-700">{filteredIssuedTrucks.length}</span>
-                  <span className="text-xs text-blue-600">Active</span>
-                </div>
-                <div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-medium text-green-700">{filteredCompletedTrucks.length}</span>
-                  <span className="text-xs text-green-600">Done</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Search Bar */}
-            <div className="hidden md:flex flex-1 max-w-md mx-8">
-              <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Search vehicles, destinations, materials..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2">
-              {/* Mobile Stats */}
-              <div className="md:hidden flex items-center gap-2 mr-2">
-                <div className="bg-blue-50 px-2 py-1 rounded text-xs font-medium text-blue-700">
-                  {filteredIssuedTrucks.length}
-                </div>
-                <div className="bg-green-50 px-2 py-1 rounded text-xs font-medium text-green-700">
-                  {filteredCompletedTrucks.length}
-                </div>
-              </div>
-
-              <Button
-                size="sm"
-                onClick={() => setShowScanner(true)}
-                className="bg-green-600 hover:bg-green-700 text-white"
-              >
-                <Scan className="h-4 w-4 md:mr-2" />
-                <span className="hidden md:inline">Scan</span>
-              </Button>
-
-              <Button size="sm" asChild>
-                <a href="/add-shipment">
-                  <Plus className="h-4 w-4 md:mr-2" />
-                  <span className="hidden md:inline">Add</span>
-                </a>
-              </Button>
-
-              {userRole === "Admin" && (
-                <Button size="sm" variant="outline" asChild>
-                  <a href="/issue-barcodes">
-                    <QrCode className="h-4 w-4 md:mr-2" />
-                    <span className="hidden md:inline">Codes</span>
-                  </a>
-                </Button>
-              )}
-
-              {/* User Menu */}
-              <div className="flex items-center gap-2 ml-2 pl-2 border-l border-gray-200">
-                <Button size="sm" variant="ghost" className="p-2">
-                  <Bell className="h-4 w-4" />
-                </Button>
-                <Button size="sm" variant="ghost" className="p-2">
-                  <Settings className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={handleLogout}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile Search */}
-          <div className="md:hidden pb-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full"
-              />
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar
+        showSearch={true}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        activeCount={filteredIssuedTrucks.length}
+        completedCount={filteredCompletedTrucks.length}
+        onScanClick={() => setShowScanner(true)}
+      />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto p-4">

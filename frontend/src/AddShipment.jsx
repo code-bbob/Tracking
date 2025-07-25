@@ -1,8 +1,7 @@
 "use client"
 
-
 import { useState } from "react"
-import { ArrowLeft, Scan, Plus, Truck } from "lucide-react"
+import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,13 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import BarcodeScanner from "./BarcodeScanner"
+import Navbar from "./components/Navbar"
 import useAxios from "./utils/useAxios"
 
 // API configuration
 const API_BASE_URL = "http://localhost:8000"
 
 export default function AddShipment() {
-
   const api = useAxios()
   const [formData, setFormData] = useState({
     code: "",
@@ -31,7 +30,6 @@ export default function AddShipment() {
     hasDriver: false,
     driverName: "",
     driverPhone: "",
-
   })
 
   const [showScanner, setShowScanner] = useState(false)
@@ -105,15 +103,16 @@ export default function AddShipment() {
     const etaTime = new Date(now.getTime() + Number.parseFloat(hours) * 60 * 60 * 1000)
     return etaTime.toISOString()
   }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsSubmitting(true)
     setSubmitStatus({ type: "", message: "" })
-  
+
     try {
       const eta = calculateETA(formData.etaHours)
       const billCode = formData.code || `BILL${Date.now().toString().slice(-6)}`
-  
+
       const billData = {
         code: billCode,
         vehicle_number: formData.vehicleNumber,
@@ -127,34 +126,31 @@ export default function AddShipment() {
         remark: formData.hasDriver ? `Driver: ${formData.driverName}` : "Driver TBD",
         status: "pending",
       }
-  
+
       const response = await api.post(`${API_BASE_URL}/bills/bills/`, billData)
       const createdBill = response.data
-  
-      // …your existing success logic…
-  
+
       setSubmitStatus({
         type: "success",
         message: `Shipment ${billCode} created successfully!`,
       })
-  
+
       // reset form after a delay
-        setFormData({
-          code: "",
-          vehicleNumber: "",
-          amount: "",
-          issueLocation: "",
-          material: "",
-          destination: "",
-          vehicleSize: "",
-          region: "",
-          etaHours: "",
-          hasDriver: false,
-          driverName: "",
-          driverPhone: "",
-        })
-        setSubmitStatus({ type: "", message: "" })
-  
+      setFormData({
+        code: "",
+        vehicleNumber: "",
+        amount: "",
+        issueLocation: "",
+        material: "",
+        destination: "",
+        vehicleSize: "",
+        region: "",
+        etaHours: "",
+        hasDriver: false,
+        driverName: "",
+        driverPhone: "",
+      })
+      setSubmitStatus({ type: "", message: "" })
     } catch (err) {
       // Try to pull out the DRF validation message
       let message = "Failed to create shipment."
@@ -164,7 +160,7 @@ export default function AddShipment() {
         if (data.non_field_errors && data.non_field_errors.length) {
           message = data.non_field_errors[0]
         } else {
-          // Otherwise, take the first field’s first message
+          // Otherwise, take the first field's first message
           const firstKey = Object.keys(data)[0]
           if (Array.isArray(data[firstKey]) && data[firstKey].length) {
             message = data[firstKey][0]
@@ -176,7 +172,7 @@ export default function AddShipment() {
         // axios/network error fallback
         message = err.message
       }
-  
+
       console.error("Error creating shipment:", err)
       setSubmitStatus({
         type: "error",
@@ -187,32 +183,24 @@ export default function AddShipment() {
     }
   }
 
-  const goBack = () => {
-    window.history.back()
-  }
+  const customActions = [
+    {
+      icon: <Plus className="h-4 w-4" />,
+      label: "Scan Code",
+      onClick: () => setShowScanner(true),
+      className: "bg-green-600 hover:bg-green-700 text-white"
+    }
+  ]
 
   return (
-
-    <div className="min-h-screen">
-      {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-40">
-        <div className="px-4 py-4 max-w-4xl mx-auto">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={goBack} className="p-2">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <Truck className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">Add Shipment</h1>
-                <p className="text-sm text-gray-500">Create a new shipment entry</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Navbar */}
+      <Navbar 
+        title="Add Shipment"
+        subtitle="Create a new shipment entry"
+        showBackButton={true}
+        customActions={customActions}
+      />
 
       {/* Status Message */}
       {submitStatus.message && (
@@ -230,8 +218,9 @@ export default function AddShipment() {
       )}
 
       {/* Main Content */}
+      <div className="max-w-4xl mx-auto p-4">
         <form onSubmit={handleSubmit}>
-          <Card className="border-0 shadow-sm">
+          <Card className="border-0 shadow-sm bg-white/90 backdrop-blur-sm">
             <CardHeader className="pb-6">
               <CardTitle className="text-lg font-medium text-gray-900">Shipment Information</CardTitle>
             </CardHeader>
@@ -249,7 +238,7 @@ export default function AddShipment() {
                       className="flex-1"
                     />
                     <Button type="button" variant="outline" size="icon" onClick={() => setShowScanner(true)}>
-                      <Scan className="h-4 w-4" />
+                      <Plus className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -441,7 +430,7 @@ export default function AddShipment() {
             <Button
               type="button"
               variant="outline"
-              onClick={goBack}
+              onClick={() => window.history.back()}
               disabled={isSubmitting}
               className="sm:w-auto bg-transparent"
             >
@@ -462,6 +451,7 @@ export default function AddShipment() {
             </Button>
           </div>
         </form>
+      </div>
 
       {/* Barcode Scanner Modal */}
       {showScanner && <BarcodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />}

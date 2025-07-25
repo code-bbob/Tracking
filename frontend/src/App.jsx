@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './Home';
 import AddShipment from './AddShipment';
 import Login from './pages/login';
-import IssueBarcodes from './pages/IssueBarcodes';
+import IssueBarcodes from './IssueBarcodes';
 import ProtectedRoute from './redux/protectedRoute';
 import { useSelector } from 'react-redux';
 function App() {
