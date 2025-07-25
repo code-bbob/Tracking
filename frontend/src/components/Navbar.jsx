@@ -165,13 +165,13 @@ const Navbar = ({
                   onClick={onScanClick}
                   className="bg-green-600 hover:bg-green-700 text-white"
                 >
-                  <Scan className="h-4 w-4 md:mr-2" />
+                  <Scan className="h-4 w-4" />
                   <span className="hidden md:inline">Scan</span>
                 </Button>
 
-                <Button size="sm" asChild>
+                <Button size="sm" className="bg-blue-600" asChild>
                   <a href="/add-shipment">
-                    <Plus className="h-4 w-4 md:mr-2" />
+                    <Plus className="h-4 w-4" />
                     <span className="hidden md:inline">Add</span>
                   </a>
                 </Button>
