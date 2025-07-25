@@ -4,12 +4,11 @@ from codes.models import Barcode
 from enterprise.models import Person
 
 class BillSerializer(serializers.ModelSerializer):
+    issued_by_name = serializers.SerializerMethodField()
+    modified_by_name = serializers.SerializerMethodField()
     class Meta:
         model = Bill
         fields = '__all__'
-        extra_kwargs = {
-            'issued_by': {'required': False}  # Make it optional in the API
-        }
 
     def create(self, validated_data):
         code = validated_data.get('code')
@@ -55,3 +54,13 @@ class BillSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return instance
+    
+    def get_issued_by_name(self, obj):
+        if obj.issued_by:
+            return obj.issued_by.user.name
+        return None
+    
+    def get_modified_by_name(self, obj):
+        if obj.modified_by:
+            return obj.modified_by.user.name
+        return None

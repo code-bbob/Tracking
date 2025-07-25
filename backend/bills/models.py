@@ -24,14 +24,14 @@ class Bill(models.Model):
     ])
     destination = models.CharField(max_length=100)
     vehicle_size = models.CharField(max_length=20, choices=[
-        ('260 cubic feet', '260 cubic feet'),
-        ('160 cubic feet', '160 cubic feet'),
-        ('100 cubic feet', '100 cubic feet'),
+        ('260', '260 cubic feet'),
+        ('160', '160 cubic feet'),
+        ('100', '100 cubic feet'),
         ('Other', 'Other'),
     ])
     region = models.CharField(max_length=50, choices=[
         ('local', 'Local'),
-        ('Crossborder', 'Crossborder'),
+        ('crossborder', 'Crossborder'),
     ])
     eta = models.DateTimeField()
     status = models.CharField(max_length=20, choices=[
@@ -40,4 +40,6 @@ class Bill(models.Model):
         ('cancelled', 'Cancelled'),
     ], default='pending')
     remark = models.TextField(blank=True, null=True)
+    modified_by = models.ForeignKey('enterprise.Person', on_delete=models.CASCADE, related_name='bills_modified', null=True, blank=True)
+    modified_date = models.DateTimeField(null=True, blank=True)
     # paid = models.BooleanField(default=False)

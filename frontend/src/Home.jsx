@@ -6,8 +6,17 @@ import Navbar from "./components/Navbar"
 import { logout } from "./redux/accessSlice"
 import { useDispatch } from "react-redux"
 import { useNavigate } from "react-router-dom"
-import { CheckCircle, Clock, Truck, X, XCircle } from "lucide-react"
+import { CheckCircle, Clock, Truck, X, XCircle, AlertTriangle, MapPin, Calendar, User, Package, CreditCard, Flag, FileText, Shield } from "lucide-react"
 import { Button } from "./components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./components/ui/dialog"
 
 export default function Home() {
   const [selectedTruck, setSelectedTruck] = useState(null)
@@ -18,6 +27,9 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true)
   const [userRole, setUserRole] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
+  const [cancellingTruck, setCancellingTruck] = useState(null)
+  const [isCancelling, setIsCancelling] = useState(false)
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const backendUrl = import.meta.env.VITE_BACKEND_URL
@@ -173,6 +185,38 @@ export default function Home() {
     )
   }
 
+  const handleCancelShipment = async () => {
+    if (!cancellingTruck) return
+    
+    setIsCancelling(true)
+    try {
+      const res = await fetch(`${backendUrl}/bills/bills/${cancellingTruck.id}/`, {
+        method: "PATCH",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("accessToken")}`
+        },
+        body: JSON.stringify({ 
+          status: "cancelled",
+          code: cancellingTruck.billNumber 
+        }),
+      })
+      
+      if (res.ok) {
+        await fetchBills()
+        setShowCancelDialog(false)
+        setCancellingTruck(null)
+        setSelectedTruck(null)
+      } else {
+        console.error("Failed to cancel shipment")
+      }
+    } catch (error) {
+      console.error("Error cancelling shipment:", error)
+    } finally {
+      setIsCancelling(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar
@@ -190,44 +234,68 @@ export default function Home() {
           <div className="flex justify-center py-12"><div className="animate-spin h-5 w-5 border-b-2 border-gray-900"></div></div>
         ) : (
           <div className="space-y-4">
-            {/* Desktop Layout - 2 columns for Active and Completed */}
-            <div className="hidden lg:grid lg:grid-cols-2 gap-4 h-[calc(100vh-80px)]">
-              {/* Active */}
-              <div className="flex flex-col overflow-scroll bg-white rounded-lg shadow-sm border h-full">
-                <div className="flex items-center justify-between p-3 border-b bg-blue-100 rounded-t-lg">
-                  <h2 className="flex items-center gap-2 font-semibold">
-                    <Clock className="h-5 w-5 text-blue-600"/> Active Shipments
-                  </h2>
-                  <span className="text-sm text-gray-500">{filteredActive.length} bills</span>
+            {/* Desktop Layout - 2 columns for Active and Completed, then Cancelled below */}
+            <div className="hidden lg:block space-y-4">
+              {/* Top row: Active and Completed side by side */}
+              <div className="grid grid-cols-2 gap-4 h-[calc(75vh-40px)]">
+                {/* Active */}
+                <div className="flex flex-col overflow-scroll bg-white rounded-lg shadow-sm border h-full">
+                  <div className="flex items-center justify-between p-3 border-b bg-blue-100 rounded-t-lg">
+                    <h2 className="flex items-center gap-2 font-semibold">
+                      <Clock className="h-5 w-5 text-blue-600"/> Active Shipments
+                    </h2>
+                    <span className="text-sm text-gray-500">{filteredActive.length} bills</span>
+                  </div>
+                  <div className="flex-1 overflow-hidden p-3">
+                    <div className="h-full overflow-y-auto space-y-2 pr-2">
+                      {filteredActive.length === 0 ? (
+                        <p className="text-center text-gray-500 py-8">No active shipments</p>
+                      ) : (
+                        filteredActive.map(truck => (
+                          <CompactBillCard key={truck.id} truck={truck} />
+                        ))
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-1 overflow-hidden p-3">
-                  <div className="h-full overflow-y-auto space-y-2 pr-2">
-                    {filteredActive.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">No active shipments</p>
-                    ) : (
-                      filteredActive.map(truck => (
-                        <CompactBillCard key={truck.id} truck={truck} />
-                      ))
-                    )}
+
+                {/* Completed */}
+                <div className="flex flex-col bg-white rounded-lg shadow-sm border overflow-scroll h-full">
+                  <div className="flex items-center justify-between p-3 border-b bg-green-100 rounded-t-lg">
+                    <h2 className="flex items-center gap-2 font-semibold">
+                      <CheckCircle className="h-5 w-5 text-green-600"/> Completed Shipments
+                    </h2>
+                    <span className="text-sm text-gray-500">{filteredCompleted.length} bills</span>
+                  </div>
+                  <div className="flex-1 overflow-hidden p-3">
+                    <div className="h-full overflow-y-auto space-y-2 pr-2">
+                      {filteredCompleted.length === 0 ? (
+                        <p className="text-center text-gray-500 py-8">No completed shipments</p>
+                      ) : (
+                        filteredCompleted.map(truck => (
+                          <CompactBillCard key={truck.id} truck={truck} isCompleted />
+                        ))
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Completed */}
-              <div className="flex flex-col bg-white rounded-lg shadow-sm border overflow-scroll h-full">
-                <div className="flex items-center justify-between p-3 border-b bg-green-100 rounded-t-lg">
+              {/* Bottom row: Cancelled full width */}
+              <div className="flex flex-col bg-white rounded-lg w-[calc(50vw-25px)] shadow-sm border overflow-scroll h-[calc(40vh-40px)]">
+                <div className="flex items-center justify-between p-3 border-b bg-red-100 rounded-t-lg">
                   <h2 className="flex items-center gap-2 font-semibold">
-                    <CheckCircle className="h-5 w-5 text-green-600"/> Completed Shipments
+                    <XCircle className="h-5 w-5 text-red-600"/> Cancelled Shipments
                   </h2>
-                  <span className="text-sm text-gray-500">{filteredCompleted.length} bills</span>
+                  <span className="text-sm text-gray-500">{filteredCancelled.length} bills</span>
                 </div>
                 <div className="flex-1 overflow-hidden p-3">
                   <div className="h-full overflow-y-auto space-y-2 pr-2">
-                    {filteredCompleted.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">No completed shipments</p>
+                    {filteredCancelled.length === 0 ? (
+                      <p className="text-center text-gray-500 py-8">No cancelled shipments</p>
                     ) : (
-                      filteredCompleted.map(truck => (
-                        <CompactBillCard key={truck.id} truck={truck} isCompleted />
+                      filteredCancelled.map(truck => (
+                        <CompactBillCard key={truck.id} truck={truck} isCancelled />
                       ))
                     )}
                   </div>
@@ -300,31 +368,6 @@ export default function Home() {
                 </div>
               </div>
             </div>
-
-            {/* Desktop Cancelled Section - Full width */}
-            <div className="hidden lg:block h-[calc(40vh-80px)]">
-              <div className="flex flex-col bg-white rounded-lg shadow-sm border overflow-scroll h-full">
-                <div className="flex items-center justify-between p-3 border-b bg-red-100 rounded-t-lg">
-                  <h2 className="flex items-center gap-2 font-semibold">
-                    <XCircle className="h-5 w-5 text-red-600"/> Cancelled Shipments
-                  </h2>
-                  <span className="text-sm text-gray-500">{filteredCancelled.length} bills</span>
-                </div>
-                <div className="flex-1 overflow-hidden p-3">
-                  <div className="h-full overflow-y-auto space-y-2 pr-2">
-                    {filteredCancelled.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">No cancelled shipments</p>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-                        {filteredCancelled.map(truck => (
-                          <CompactBillCard key={truck.id} truck={truck} isCancelled />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         )}
       </div>
@@ -332,84 +375,215 @@ export default function Home() {
       {showScanner && <BarcodeScanner onScan={handleScan} onClose={()=>setShowScanner(false)} />}
       {!!selectedTruck && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeDetails}>
-          <div className="bg-white rounded-lg max-w-lg w-full max-h-[95vh] overflow-y-auto shadow-2xl" onClick={e=>e.stopPropagation()}>
-            {/* Truck Details Modal */}
-            <div className="p-4 sm:p-6">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Shipment Details</h3>
-                <Button variant="ghost" size="sm" onClick={closeDetails}>
-                  <X className="h-5 w-5" />
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto shadow-xl border border-gray-200" onClick={e=>e.stopPropagation()}>
+            {/* Compact Header */}
+            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Truck className="h-5 w-5 text-gray-600" />
+                <div>
+                  <h3 className="font-semibold text-gray-900">#{selectedTruck.billNumber}</h3>
+                  <p className="text-xs text-gray-500">{selectedTruck.vehicleNumber}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedTruck.status, false, selectedTruck.region)}`}>
+                  {selectedTruck.status}
+                </span>
+                <Button variant="ghost" size="sm" onClick={closeDetails} className="h-6 w-6 p-0">
+                  <X className="h-4 w-4" />
                 </Button>
               </div>
+            </div>
 
-              {/* Details */}
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Vehicle Number</label>
-                    <p className="text-sm text-gray-900">{selectedTruck.vehicleNumber}</p>
+            {/* Compact Content */}
+            <div className="p-4 space-y-4">
+              {/* Route */}
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <MapPin className="h-4 w-4" />
+                  <span>Route</span>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium text-gray-900">{selectedTruck.issue_location}</p>
+                  <p className="text-xs text-gray-500">to {selectedTruck.destination}</p>
+                </div>
+              </div>
+
+              {/* Material & Amount */}
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Package className="h-4 w-4" />
+                  <span>Cargo</span>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium text-gray-900 capitalize">{selectedTruck.cargo}</p>
+                  <p className="text-lg font-bold text-green-600">Rs. {selectedTruck.amount?.toLocaleString()}</p>
+                </div>
+              </div>
+
+              {/* Timeline */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Calendar className="h-4 w-4" />
+                    <span>Issued</span>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Bill Number</label>
-                    <p className="text-sm text-gray-900">{selectedTruck.billNumber}</p>
+                  <p className="text-gray-900">{formatDateTime(selectedTruck.dateIssued)}</p>
+                </div>
+              
+               <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <User className="h-4 w-4" />
+                    <span>Issued By</span>
                   </div>
+                  <p className="text-gray-900 font-medium">{selectedTruck.issued_by_name || 'System'}</p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Material</label>
-                    <p className="text-sm text-gray-900">{selectedTruck.cargo}</p>
+   
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Clock className="h-4 w-4" />
+                    <span>Expected</span>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Amount</label>
-                    <p className="text-sm text-gray-900">Rs. {selectedTruck.amount}</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Issue Location</label>
-                    <p className="text-sm text-gray-900">{selectedTruck.issue_location}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Destination</label>
-                    <p className="text-sm text-gray-900">{selectedTruck.destination}</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Date Issued</label>
-                    <p className="text-sm text-gray-900">{formatDateTime(selectedTruck.dateIssued)}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Expected Time</label>
-                    <p className="text-sm text-gray-900">{formatDateTime(selectedTruck.expectedTime)}</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Status</label>
-                    <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${getStatusColor(selectedTruck.status, false, selectedTruck.region)}`}>
-                      {selectedTruck.status}
-                    </span>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Region</label>
-                    <p className="text-sm text-gray-900">{selectedTruck.region}</p>
-                  </div>
+                  <p className="text-gray-900">{formatDateTime(selectedTruck.expectedTime)}</p>
                 </div>
 
                 {selectedTruck.completedTime && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Completed Time</label>
-                    <p className="text-sm text-gray-900">{formatDateTime(selectedTruck.completedTime)}</p>
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2 text-green-600">
+                      <CheckCircle className="h-4 w-4" />
+                      <span>Completed</span>
+                    </div>
+                    <p className="text-green-700 font-medium">{formatDateTime(selectedTruck.completedTime)}</p>
+                  </div>
+                )}
+
+                {selectedTruck.modified_date && (
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Clock className="h-4 w-4" />
+                      <span>Last Modified</span>
+                    </div>
+                    <p className="text-gray-900">{formatDateTime(selectedTruck.modified_date)}</p>
                   </div>
                 )}
               </div>
+
+              {/* Personnel */}
+                            {selectedTruck.modified_by && (
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <User className="h-4 w-4" />
+                      <span>Modified By</span>
+                    </div>
+                    <p className="text-gray-900">{selectedTruck.modified_by_name}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Vehicle Details */}
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Truck className="h-4 w-4" />
+                  <span>Vehicle Size</span>
+                </div>
+                <p className="text-gray-900">{selectedTruck.vehicle_size}</p>
+              </div>
+
+              {/* Region */}
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Flag className="h-4 w-4" />
+                  <span>Region</span>
+                </div>
+                <p className="text-gray-900 capitalize">{selectedTruck.region}</p>
+              </div>
+
+              {/* Remarks */}
+              {selectedTruck.remark && (
+                <div className="pt-2 border-t border-gray-100">
+                  <div className="flex items-start gap-2 text-sm">
+                    <FileText className="h-4 w-4 text-gray-600 mt-0.5" />
+                    <div>
+                      <span className="text-gray-600">Remarks:</span>
+                      <p className="text-gray-900 mt-1">{selectedTruck.remark}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* Compact Footer Actions */}
+            {userRole === "Admin" && selectedTruck.status === "pending" && (
+              <div className="border-t border-gray-200 p-3">
+                <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={() => setCancellingTruck(selectedTruck)}
+                      className="w-full flex items-center justify-center gap-2"
+                    >
+                      <XCircle className="h-4 w-4" />
+                      Cancel Shipment
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2 text-red-600">
+                        <AlertTriangle className="h-5 w-5" />
+                        Cancel Shipment
+                      </DialogTitle>
+                      <DialogDescription className="pt-2">
+                        Are you sure you want to cancel this shipment? This action cannot be undone.
+                      </DialogDescription>
+                    </DialogHeader>
+                    
+                    {cancellingTruck && (
+                      <div className="bg-gray-50 p-3 rounded-lg my-4">
+                        <div className="text-sm space-y-1">
+                          <p><span className="font-medium">Vehicle:</span> {cancellingTruck.vehicleNumber}</p>
+                          <p><span className="font-medium">Bill:</span> #{cancellingTruck.billNumber}</p>
+                          <p><span className="font-medium">Destination:</span> {cancellingTruck.destination}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    <DialogFooter className="gap-2 sm:gap-0">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setShowCancelDialog(false)
+                          setCancellingTruck(null)
+                        }}
+                        disabled={isCancelling}
+                      >
+                        Keep
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        onClick={handleCancelShipment}
+                        disabled={isCancelling}
+                        className="flex items-center gap-2"
+                      >
+                        {isCancelling ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                            Cancelling...
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="h-4 w-4" />
+                            Cancel
+                          </>
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -72,7 +72,6 @@ export default function AddShipment() {
         vehicle_size: form.vehicleSize,
         region: form.region,
         eta: calculateETA(Number.parseFloat(form.etaHours) || 0),
-        remark: "Driver TBD",
         status: "pending",
       }
       await api.post(`/bills/bills/`, payload)

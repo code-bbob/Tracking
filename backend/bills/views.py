@@ -5,6 +5,7 @@ from rest_framework import status
 from .models import Bill
 from codes.models import Barcode
 from .serializers import BillSerializer
+from django.utils import timezone
 
 class BillView(APIView):
     def get(self, request):
@@ -28,6 +29,10 @@ class BillView(APIView):
             bill = Bill.objects.get(pk=pk)
         except Bill.DoesNotExist:
             return Response({"error": "Bill not found"}, status=status.HTTP_404_NOT_FOUND)
+        person = request.user.person
+        if person:
+            request.data['modified_by'] = person
+            request.data['modified_date'] = timezone.now()
         serializer = BillSerializer(bill, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()

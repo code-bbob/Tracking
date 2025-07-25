@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import permission_classes
+from rest_framework.pagination import PageNumberPagination
 import random
 from .models import Barcode
 from enterprise.models import Person
@@ -12,13 +13,49 @@ class IssueBarcodeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Logic to issue a barcode
-        # For demonstration, returning a static barcode
-        barcode_data = {
-            'barcode': '1234567890123',
-            'message': 'Barcode issued successfully'
-        }
-        return Response(barcode_data)
+        # Fetch all issued barcodes for the current user's enterprise with filtering, search, and pagination
+        person = request.user.person
+        enterprise = person.enterprise
+        
+        # Start with base queryset
+        queryset = Barcode.objects.filter(
+            assigned_to__enterprise=enterprise
+        ).select_related('assigned_to', 'assigned_by').order_by('-created_at')
+        
+        # Filter by assigned_to if provided
+        assigned_to_filter = request.GET.get('assigned_to')
+        if assigned_to_filter:
+            queryset = queryset.filter(assigned_to__user=assigned_to_filter)
+        
+        # Search by barcode code if provided
+        search_query = request.GET.get('search')
+        if search_query:
+            queryset = queryset.filter(code__icontains=search_query)
+        
+        # Apply pagination
+        paginator = PageNumberPagination()
+        paginator.page_size = 20  # You can adjust this
+        paginated_barcodes = paginator.paginate_queryset(queryset, request)
+        
+        barcode_data = []
+        for barcode in paginated_barcodes:
+            barcode_data.append({
+                'code': barcode.code,
+                'status': barcode.status,
+                'assigned_to': {
+                    'id': barcode.assigned_to.user.id,
+                    'name': barcode.assigned_to.user.name,
+                },
+                'assigned_by': {
+                    'name': barcode.assigned_by.user.name,
+                },
+                'created_at': barcode.created_at.isoformat(),
+                'assigned_at': barcode.assigned_at.isoformat(),
+            })
+        
+        return paginator.get_paginated_response({
+            'barcodes': barcode_data
+        })
 
     def post(self, request):
         person = request.user.person
