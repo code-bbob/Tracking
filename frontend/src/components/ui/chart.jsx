@@ -31,7 +31,7 @@ const ChartContainer = React.forwardRef(({ id, className, children, config, ...p
 })
 ChartContainer.displayName = "ChartContainer"
 
-const ChartTooltip = ({ cursor, content }) => {
+const ChartTooltip = ({ cursor, content, ...props }) => {
   return null // This will be handled by recharts itself
 }
 

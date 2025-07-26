@@ -265,8 +265,7 @@ def analytics_performance(request):
         
         # Staff performance
         staff_performance = bills_queryset.values(
-            'issued_by__user__first_name',
-            'issued_by__user__last_name'
+            'issued_by__user__name',
         ).annotate(
             bills_issued=Count('id'),
             total_revenue=Sum('amount'),
