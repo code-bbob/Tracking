@@ -24,9 +24,9 @@ class Bill(models.Model):
     ])
     destination = models.CharField(max_length=100)
     vehicle_size = models.CharField(max_length=20, choices=[
-        ('260', '260 cubic feet'),
-        ('160', '160 cubic feet'),
-        ('100', '100 cubic feet'),
+        ('260 cubic feet', '260 cubic feet'),
+        ('160 cubic feet', '160 cubic feet'),
+        ('100 cubic feet', '100 cubic feet'),
         ('Other', 'Other'),
     ])
     region = models.CharField(max_length=50, choices=[

@@ -250,15 +250,15 @@ export default function Home() {
               {/* Top row: Active and Completed side by side */}
               <div className="grid grid-cols-2 gap-4 h-[calc(75vh-40px)]">
                 {/* Active */}
-                <div className="flex flex-col overflow-y-scroll bg-white rounded-lg shadow-sm border h-full">
+                <div className="flex flex-col overflow-scroll bg-white rounded-lg shadow-sm border h-full">
                   <div className="flex items-center justify-between p-3 border-b bg-blue-100 rounded-t-lg">
                     <h2 className="flex items-center gap-2 font-semibold">
                       <Clock className="h-5 w-5 text-blue-600"/> Active Shipments
                     </h2>
                     <span className="text-sm text-gray-500">{filteredActive.length} bills</span>
                   </div>
-                  <div className="flex-1  p-3">
-                    <div className="h-full space-y-2 pr-2">
+                  <div className="flex-1 overflow-hidden p-3">
+                    <div className="h-full overflow-y-auto space-y-2 pr-2">
                       {filteredActive.length === 0 ? (
                         <p className="text-center text-gray-500 py-8">No active shipments</p>
                       ) : (
@@ -266,63 +266,20 @@ export default function Home() {
                           <CompactBillCard key={truck.id} truck={truck} />
                         ))
                       )}
-      {filteredActive.length === 0 ? (
-                        <p className="text-center text-gray-500 py-8">No active shipments</p>
-                      ) : (
-                        filteredActive.map(truck => (
-                          <CompactBillCard key={truck.id} truck={truck} />
-                        ))
-                      )}
-{filteredActive.length === 0 ? (
-                        <p className="text-center text-gray-500 py-8">No active shipments</p>
-                      ) : (
-                        filteredActive.map(truck => (
-                          <CompactBillCard key={truck.id} truck={truck} />
-                        ))
-                      )}
-{filteredActive.length === 0 ? (
-                        <p className="text-center text-gray-500 py-8">No active shipments</p>
-                      ) : (
-                        filteredActive.map(truck => (
-                          <CompactBillCard key={truck.id} truck={truck} />
-                        ))
-                      )}
-{filteredActive.length === 0 ? (
-                        <p className="text-center text-gray-500 py-8">No active shipments</p>
-                      ) : (
-                        filteredActive.map(truck => (
-                          <CompactBillCard key={truck.id} truck={truck} />
-                        ))
-                      )}
-{filteredActive.length === 0 ? (
-                        <p className="text-center text-gray-500 py-8">No active shipments</p>
-                      ) : (
-                        filteredActive.map(truck => (
-                          <CompactBillCard key={truck.id} truck={truck} />
-                        ))
-                      )}
-{filteredActive.length === 0 ? (
-                        <p className="text-center text-gray-500 py-8">No active shipments</p>
-                      ) : (
-                        filteredActive.map(truck => (
-                          <CompactBillCard key={truck.id} truck={truck} />
-                        ))
-                      )}
-
                     </div>
                   </div>
                 </div>
 
                 {/* Completed */}
-                <div className="flex flex-col bg-white rounded-lg shadow-sm border overflow-y-scroll h-full">
+                <div className="flex flex-col bg-white rounded-lg shadow-sm border overflow-scroll h-full">
                   <div className="flex items-center justify-between p-3 border-b bg-green-100 rounded-t-lg">
                     <h2 className="flex items-center gap-2 font-semibold">
                       <CheckCircle className="h-5 w-5 text-green-600"/> Completed Shipments
                     </h2>
                     <span className="text-sm text-gray-500">{filteredCompleted.length} bills</span>
                   </div>
-                  <div className="flex-1  p-3">
-                    <div className="h-full  space-y-2 pr-2">
+                  <div className="flex-1 overflow-hidden p-3">
+                    <div className="h-full overflow-y-auto space-y-2 pr-2">
                       {filteredCompleted.length === 0 ? (
                         <p className="text-center text-gray-500 py-8">No completed shipments</p>
                       ) : (
@@ -336,41 +293,16 @@ export default function Home() {
               </div>
 
               {/* Bottom row: Cancelled full width */}
-              <div className="flex flex-col bg-white rounded-lg w-[calc(50vw-25px)] shadow-sm border overflow-y-scroll h-[calc(80vh-40px)]">
+              <div className="flex flex-col bg-white rounded-lg w-[calc(50vw-25px)] shadow-sm border overflow-scroll h-[calc(40vh-40px)]">
                 <div className="flex items-center justify-between p-3 border-b bg-red-100 rounded-t-lg">
                   <h2 className="flex items-center gap-2 font-semibold">
                     <XCircle className="h-5 w-5 text-red-600"/> Cancelled Shipments
                   </h2>
                   <span className="text-sm text-gray-500">{filteredCancelled.length} bills</span>
                 </div>
-                <div className="flex-1  p-3">
-                  <div className="h-full  space-y-2 pr-2">
+                <div className="flex-1 overflow-hidden p-3">
+                  <div className="h-full overflow-y-auto space-y-2 pr-2">
                     {filteredCancelled.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">No cancelled shipments</p>
-                    ) : (
-                      filteredCancelled.map(truck => (
-                        <CompactBillCard key={truck.id} truck={truck} isCancelled />
-                      ))
-                    )}
-    {filteredCancelled.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">No cancelled shipments</p>
-                    ) : (
-                      filteredCancelled.map(truck => (
-                        <CompactBillCard key={truck.id} truck={truck} isCancelled />
-                      ))
-                    )}{filteredCancelled.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">No cancelled shipments</p>
-                    ) : (
-                      filteredCancelled.map(truck => (
-                        <CompactBillCard key={truck.id} truck={truck} isCancelled />
-                      ))
-                    )}{filteredCancelled.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">No cancelled shipments</p>
-                    ) : (
-                      filteredCancelled.map(truck => (
-                        <CompactBillCard key={truck.id} truck={truck} isCancelled />
-                      ))
-                    )}{filteredCancelled.length === 0 ? (
                       <p className="text-center text-gray-500 py-8">No cancelled shipments</p>
                     ) : (
                       filteredCancelled.map(truck => (

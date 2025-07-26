@@ -109,6 +109,7 @@ class BillView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def patch(self, request, pk):
+        print(request.data)
         try:
             bill = Bill.objects.get(pk=pk)
         except Bill.DoesNotExist:

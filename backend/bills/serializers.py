@@ -34,6 +34,8 @@ class BillSerializer(serializers.ModelSerializer):
         # Handle issued_by field - use first Person or create a default one
         status = validated_data.get('status')
         code = validated_data.get('code')
+        print(validated_data)
+        print("code", code)
         if code:
             barcode = Barcode.objects.get(code=code)
             print("barcode", barcode)
@@ -46,13 +48,16 @@ class BillSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError("Invalid status for bill.")
                 barcode.save()
                 print(barcode.status)
+                print("HERE FOR THE FIRST TIME")
             else:
-                raise serializers.ValidationError("Barcode is either not issued or already expired.")
+                raise serializers.ValidationError("Barcode is either not active or already expired.")
         else:
             raise serializers.ValidationError("Barcode code is required for updating the bill.")
         for attr, value in validated_data.items():
+            print("HERE AS WELL", attr, value)
             setattr(instance, attr, value)
         instance.save()
+        print("DONE",instance.status)
         return instance
     
     def get_issued_by_name(self, obj):
