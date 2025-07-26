@@ -6,6 +6,7 @@ import Navbar from "./components/Navbar"
 import { logout } from "./redux/accessSlice"
 import { useDispatch } from "react-redux"
 import { useNavigate } from "react-router-dom"
+import useAxios from "./utils/useAxios"
 import { CheckCircle, Clock, Truck, X, XCircle, AlertTriangle, MapPin, Calendar, User, Package, CreditCard, Flag, FileText, Shield } from "lucide-react"
 import { Button } from "./components/ui/button"
 import {
@@ -19,6 +20,7 @@ import {
 } from "./components/ui/dialog"
 
 export default function Home() {
+  const api = useAxios()
   const [selectedTruck, setSelectedTruck] = useState(null)
   const [showScanner, setShowScanner] = useState(false)
   const [userShipments, setUserShipments] = useState([])
@@ -32,7 +34,6 @@ export default function Home() {
   const [isCancelling, setIsCancelling] = useState(false)
   const dispatch = useDispatch()
   const navigate = useNavigate()
-  const backendUrl = import.meta.env.VITE_BACKEND_URL
 
   // mappings...
   const materialTypeMap = { roda: { en: "Roda", np: "रोडा" }, /*...*/ }
@@ -48,20 +49,18 @@ export default function Home() {
 
   const fetchUserRole = async () => {
     try {
-      const token = localStorage.getItem("accessToken")
-      const res = await fetch(`${backendUrl}/enterprise/role/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (res.ok) setUserRole(await res.json())
-    } catch (e) { console.error(e) }
+      const res = await api.get("/enterprise/role/")
+      setUserRole(res.data)
+    } catch (e) { 
+      console.error(e) 
+    }
   }
 
   const fetchBills = async () => {
     try {
       setIsLoading(true)
-      const res = await fetch(`${backendUrl}/bills/bills/`)
-      if (!res.ok) throw new Error(res.status)
-      const data = await res.json()
+      const res = await api.get("/bills/bills/")
+      const data = res.data
       
       // Handle both paginated and non-paginated responses
       const bills = data.results || data
@@ -112,13 +111,8 @@ export default function Home() {
   }, [])
 
   const updateBillStatus = async (id, status, code) => {
-    const res = await fetch(`${backendUrl}/bills/bills/${id}/`, {
-      method: "PATCH",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify({ status, code }),
-    })
-    if (!res.ok) throw new Error(res.status)
-    return res.json()
+    const res = await api.patch(`/bills/bills/${id}/`, { status, code })
+    return res.data
   }
 
   const handleTruckClick = truck => setSelectedTruck(truck)
@@ -201,26 +195,15 @@ export default function Home() {
     
     setIsCancelling(true)
     try {
-      const res = await fetch(`${backendUrl}/bills/bills/${cancellingTruck.id}/`, {
-        method: "PATCH",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("accessToken")}`
-        },
-        body: JSON.stringify({ 
-          status: "cancelled",
-          code: cancellingTruck.billNumber 
-        }),
+      await api.patch(`/bills/bills/${cancellingTruck.id}/`, { 
+        status: "cancelled",
+        code: cancellingTruck.billNumber 
       })
       
-      if (res.ok) {
-        await fetchBills()
-        setShowCancelDialog(false)
-        setCancellingTruck(null)
-        setSelectedTruck(null)
-      } else {
-        console.error("Failed to cancel shipment")
-      }
+      await fetchBills()
+      setShowCancelDialog(false)
+      setCancellingTruck(null)
+      setSelectedTruck(null)
     } catch (error) {
       console.error("Error cancelling shipment:", error)
     } finally {
