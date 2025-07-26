@@ -5,6 +5,7 @@ import Home from './Home';
 import AddShipment from './AddShipment';
 import Login from './pages/login';
 import IssueBarcodes from './IssueBarcodes';
+import Analytics from './pages/AnalyticsNew';
 import Records from './Records';
 import ProtectedRoute from './redux/protectedRoute';
 import AppLayout from './components/AppLayout';
@@ -31,6 +32,11 @@ function App() {
           <Route path="/issue-barcodes" element={
             <AppLayout>
               <IssueBarcodes />
+            </AppLayout>
+          } />
+          <Route path="/analytics" element={
+            <AppLayout>
+              <Analytics />
             </AppLayout>
           } />
           <Route path="/records" element={
