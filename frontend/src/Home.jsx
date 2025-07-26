@@ -82,18 +82,12 @@ export default function Home() {
       setUserShipments(pending)
       setCompletedUserShipments(completed)
       setCancelledUserShipments(cancelled)
-      
-      // Save to localStorage after processing
-      localStorage.setItem("truckShipments", JSON.stringify(pending))
-      localStorage.setItem("completedShipments", JSON.stringify(completed))
-      localStorage.setItem("cancelledShipments", JSON.stringify(cancelled))
-    } catch {
-      const saved = JSON.parse(localStorage.getItem("truckShipments") || "[]")
-      const savedComp = JSON.parse(localStorage.getItem("completedShipments") || "[]")
-      const savedCanc = JSON.parse(localStorage.getItem("cancelledShipments") || "[]")
-      setUserShipments(saved)
-      setCompletedUserShipments(savedComp)
-      setCancelledUserShipments(savedCanc)
+    } catch (error) {
+      console.error("Error fetching bills:", error)
+      // Reset to empty arrays on error instead of using localStorage
+      setUserShipments([])
+      setCompletedUserShipments([])
+      setCancelledUserShipments([])
     } finally {
       setIsLoading(false)
     }
@@ -103,10 +97,8 @@ export default function Home() {
     fetchBills()
     fetchUserRole()
     window.addEventListener("focus", fetchBills)
-    window.addEventListener("storage", fetchBills)
     return () => {
       window.removeEventListener("focus", fetchBills)
-      window.removeEventListener("storage", fetchBills)
     }
   }, [])
 
