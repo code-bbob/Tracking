@@ -18,8 +18,8 @@ class Bill(models.Model):
         ('dust', 'Dust'),
         ('mato','Mato'),
         ('base/subbase', 'Base/Subbase'),
-        ('Itta', 'Itta'),
-        ('Kawadi', 'Kawadi'),
+        ('itta', 'Itta'),
+        ('kawadi', 'Kawadi'),
         ('other', 'Other'),
     ])
     destination = models.CharField(max_length=100)
@@ -27,7 +27,7 @@ class Bill(models.Model):
         ('260 cubic feet', '260 cubic feet'),
         ('160 cubic feet', '160 cubic feet'),
         ('100 cubic feet', '100 cubic feet'),
-        ('Other', 'Other'),
+        ('other', 'Other'),
     ])
     region = models.CharField(max_length=50, choices=[
         ('local', 'Local'),

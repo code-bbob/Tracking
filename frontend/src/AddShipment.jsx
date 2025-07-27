@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import Navbar from "./components/Navbar"
+import { useNavigate } from "react-router-dom"
 import BarcodeScanner from "./BarcodeScanner"
 import useAxios from "./utils/useAxios"
 
@@ -26,6 +27,7 @@ export default function AddShipment() {
   const [showScanner, setShowScanner] = useState(false)
   const [status, setStatus] = useState({ type: "", message: "" })
   const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
   const materialTypes = [
     { en: "Roda", np: "रोडा", value: "roda" },
@@ -99,6 +101,7 @@ export default function AddShipment() {
       setStatus({ type: "error", message: msg })
     } finally {
       setLoading(false)
+      navigate("/")
     }
   }
 

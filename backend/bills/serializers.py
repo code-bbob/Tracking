@@ -27,6 +27,8 @@ class BillSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Barcode is either not issued or already expired.")
 
         bill = Bill.objects.create(**validated_data)
+        barcode.associated_bill = bill
+        barcode.save()
         return bill
     
     def update(self, instance, validated_data):

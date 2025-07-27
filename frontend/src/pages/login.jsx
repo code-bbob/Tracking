@@ -2,25 +2,28 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { login, logout } from "../redux/accessSlice";
-import { motion } from "framer-motion";
-import { Loader, Lock, Mail } from "lucide-react";
+import { Loader, Lock, Mail, Truck, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { Button } from '../components/ui/button';
 import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { clearSelectedBranch } from "../utils/branchUtils";
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading,setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate('');
   const dispatch = useDispatch();
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const handleSubmit = async (e) => {
-    
     e.preventDefault();
     setIsLoading(true);
+    setError('');
+    
     try {
       const response = await fetch(`${backendUrl}/userauth/login/`, {
         method: 'POST',
@@ -38,122 +41,151 @@ const Login = () => {
         // Clear any previously selected branch to force fresh selection
         clearSelectedBranch();
         
-        setIsLoading(false)
         dispatch(login());
         
         // Redirect to branch selection instead of dashboard
         navigate('/');
+      } else {
+        setError(data.message || 'Invalid email or password');
       }
     } catch (err) {
-      setError('Invalid email or password');
-      setIsLoading(false)
+      console.error('Login error:', err);
+      setError('Network error. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-400 rounded-full opacity-10 blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-400 rounded-full opacity-10 blur-3xl"></div>
+      </div>
 
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-sm bg-gradient-to-b from-slate-800 to-slate-900 rounded-2xl shadow-2xl overflow-hidden"
-      >
-        <div className="p-8">
-          <motion.h2
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-blue-400 to-indigo-400 text-transparent bg-clip-text"
-          >
-            Welcome Back
-          </motion.h2>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
-            >
-              <Input
-                type="email"
-                placeholder="Email Address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="bg-slate-700 border-slate-600 text-white placeholder-slate-400"
-              />
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
-            >
-              <Input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="bg-slate-700 border-slate-600 text-white placeholder-slate-400"
-              />
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.5 }}
-              className="flex items-center justify-between"
-            >
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input type="checkbox" className="form-checkbox text-blue-500" />
-                <span className="text-sm text-slate-300">Remember me</span>
-              </label>
-              <Link
-                href="/forgot-password"
-                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-              >
-                Forgot Password?
-              </Link>
-            </motion.div>
-            {error && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-red-500 font-semibold text-center"
-              >
-                {error}
-              </motion.p>
-            )}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.5 }}
-            >
+      <div className="w-full max-w-md relative z-10">
+        <Card className="shadow-xl border-0 backdrop-blur-sm bg-white/90">
+          <CardHeader className="text-center pb-4">
+            {/* Logo */}
+            <div className="flex justify-center mb-4">
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-3 rounded-xl shadow-lg">
+                <Truck className="h-8 w-8 text-white" />
+              </div>
+            </div>
+            
+            <CardTitle className="text-2xl font-bold text-gray-900">
+              Tracking System
+            </CardTitle>
+            <p className="text-sm text-gray-600">Sign in to your account</p>
+          </CardHeader>
+          
+          <CardContent className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Email Field */}
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                  Email
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-9 h-10"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Password Field */}
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                  Password
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-9 pr-9 h-10"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Remember Me & Forgot Password */}
+              <div className="flex items-center justify-between text-sm">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                  />
+                  <span className="text-gray-600">Remember me</span>
+                </label>
+                 <Link
+                  to="/forgot-password"
+                  className="text-blue-600 hidden md:block hover:text-blue-700 font-medium"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
+
+              {/* Submit Button */}
               <Button
-                className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900"
                 type="submit"
                 disabled={isLoading}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white h-10"
               >
                 {isLoading ? (
-                  <Loader className="w-6 h-6 animate-spin mx-auto" />
+                  <div className="flex items-center gap-2">
+                    <Loader className="h-4 w-4 animate-spin" />
+                    <span>Signing in...</span>
+                  </div>
                 ) : (
-                  "Login"
+                  <div className="flex items-center gap-2">
+                    <span>Sign In</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
                 )}
               </Button>
-            </motion.div>
-          </form>
-        </div>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7, duration: 0.5 }}
-          className="px-8 py-4 bg-slate-900 bg-opacity-50 flex justify-center"
-        >
-          <p className="text-sm text-slate-400">
-            Don't have an account?{" "}
-            <Link to ="/signup" className="text-blue-400 hover:text-blue-300 transition-colors">
-              Sign Up
-            </Link>
-          </p>
-        </motion.div>
-      </motion.div>
+            </form>
+
+            {/* Sign Up Link */}
+            <div className="text-center pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-600">
+                Don't have an account?{" "}
+                <Link
+                  to="/signup"
+                  className="text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Sign up
+                </Link>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

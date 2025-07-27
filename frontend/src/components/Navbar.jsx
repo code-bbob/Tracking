@@ -122,7 +122,7 @@ const Navbar = ({
                   <Clock className="h-3.5 w-3.5 text-red-600" />
                   <span className="text-sm font-medium text-red-700">{cancelledCount}</span>
                 </div>
-                  <div className="text-xs text-red-600">Active</div>
+                  <div className="text-xs text-red-600">Cancelled</div>
                 </div>
 
 
