@@ -7,6 +7,11 @@ urlpatterns = [
     path('bills/<int:pk>/', views.BillView.as_view(), name='bill_detail'),
     path('scan/', views.ScanView.as_view(), name='scan'),
     
+    # Optimized bill endpoints by status
+    path('bills/active/', views.get_active_bills, name='active_bills'),
+    path('bills/completed/', views.get_completed_bills, name='completed_bills'),
+    path('bills/cancelled/', views.get_cancelled_bills, name='cancelled_bills'),
+    
     # Analytics endpoints
     path('analytics/overview/', analytics_views.analytics_overview, name='analytics_overview'),
     path('analytics/barcodes/', analytics_views.analytics_barcodes, name='analytics_barcodes'),

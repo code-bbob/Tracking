@@ -8,13 +8,130 @@ from .models import Bill
 from codes.models import Barcode
 from .serializers import BillSerializer
 from django.utils import timezone
-# import status
-from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
+
+class CustomPagination(PageNumberPagination):
+    page_size = 4
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_active_bills(request):
+    """Get all active (pending) bills for the user's enterprise - no pagination needed"""
+    try:
+        # Get all active bills for the enterprise
+        queryset = Bill.objects.filter(
+            status='pending'
+        ).select_related('issued_by__user', 'modified_by__user').order_by('-date_issued')
+        
+        # Apply search filter if provided
+        search_query = request.GET.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(code__icontains=search_query) |
+                Q(vehicle_number__icontains=search_query) |
+                Q(destination__icontains=search_query) |
+                Q(material__icontains=search_query) |
+                Q(customer_name__icontains=search_query)
+            )
+        
+        serializer = BillSerializer(queryset, many=True)
+        return Response({
+            'results': serializer.data,
+            'count': queryset.count()
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to fetch active bills: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_completed_bills(request):
+    """Get paginated completed bills for the user's enterprise"""
+    try:
+        
+        # Get completed bills for the enterprise
+        queryset = Bill.objects.filter(
+            status='completed'
+        ).select_related('issued_by__user', 'modified_by__user').order_by('-modified_date')
+        
+        # Apply search filter if provided
+        search_query = request.GET.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(code__icontains=search_query) |
+                Q(vehicle_number__icontains=search_query) |
+                Q(destination__icontains=search_query) |
+                Q(material__icontains=search_query) |
+                Q(customer_name__icontains=search_query)
+            )
+        
+        # Apply pagination
+        paginator = CustomPagination()
+        paginated_bills = paginator.paginate_queryset(queryset, request)
+        
+        if paginated_bills is not None:
+            serializer = BillSerializer(paginated_bills, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
+        serializer = BillSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to fetch completed bills: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_cancelled_bills(request):
+    """Get paginated cancelled bills for the user's enterprise"""
+    try:
+        
+        # Get cancelled bills for the enterprise
+        queryset = Bill.objects.filter(
+            status='cancelled'
+        ).select_related('issued_by__user', 'modified_by__user').order_by('-modified_date')
+        
+        # Apply search filter if provided
+        search_query = request.GET.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(code__icontains=search_query) |
+                Q(vehicle_number__icontains=search_query) |
+                Q(destination__icontains=search_query) |
+                Q(material__icontains=search_query) |
+                Q(customer_name__icontains=search_query)
+            )
+        
+        # Apply pagination
+        paginator = CustomPagination()
+        paginated_bills = paginator.paginate_queryset(queryset, request)
+        
+        if paginated_bills is not None:
+            serializer = BillSerializer(paginated_bills, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        
+        serializer = BillSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response(
+            {'error': f'Failed to fetch cancelled bills: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 class BillView(APIView):
     def get(self, request):
-        # Start with base queryset
-        queryset = Bill.objects.all().select_related('issued_by__user', 'modified_by__user').order_by('-date_issued')
+        # Start with base queryset - add enterprise filtering for security
+        queryset = Bill.objects.all(
+        ).select_related('issued_by__user', 'modified_by__user').order_by('-date_issued')
         
         # Apply filters
         search_query = request.GET.get('search')
@@ -152,4 +269,3 @@ class ScanView(APIView):
                 return Response({"message": "Bill completed successfully"}, status=status.HTTP_200_OK)
             elif status == 'completed':
                 return Response({"error": "Bill is already completed"}, status=status.HTTP_400_BAD_REQUEST)
-        

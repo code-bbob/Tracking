@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import BarcodeScanner from "./BarcodeScanner"
-import ScanNotification from "./components/ScanNotification" // Add this import
+import ScanNotification from "./components/ScanNotification"
 import Navbar from "./components/Navbar"
+import Pagination from "./components/Pagination"
 import { logout } from "./redux/accessSlice"
 import { useDispatch } from "react-redux"
 import { useNavigate } from "react-router-dom"
@@ -24,11 +25,27 @@ export default function Home() {
   const api = useAxios()
   const [selectedTruck, setSelectedTruck] = useState(null)
   const [showScanner, setShowScanner] = useState(false)
-  const [scanResult, setScanResult] = useState(null) // { type: 'success'|'error', message: '', show: true }
-  const [userShipments, setUserShipments] = useState([])
-  const [completedUserShipments, setCompletedUserShipments] = useState([])
-  const [cancelledUserShipments, setCancelledUserShipments] = useState([])
+  const [scanResult, setScanResult] = useState(null)
+  
+  // Active bills (no pagination needed)
+  const [activeShipments, setActiveShipments] = useState([])
+  const [activeCount, setActiveCount] = useState(0)
+  
+  // Completed bills (paginated)
+  const [completedShipments, setCompletedShipments] = useState([])
+  const [completedPage, setCompletedPage] = useState(1)
+  const [completedTotalPages, setCompletedTotalPages] = useState(1)
+  const [completedTotalCount, setCompletedTotalCount] = useState(0)
+  
+  // Cancelled bills (paginated)
+  const [cancelledShipments, setCancelledShipments] = useState([])
+  const [cancelledPage, setCancelledPage] = useState(1)
+  const [cancelledTotalPages, setCancelledTotalPages] = useState(1)
+  const [cancelledTotalCount, setCancelledTotalCount] = useState(0)
+  
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingCompleted, setIsLoadingCompleted] = useState(false)
+  const [isLoadingCancelled, setIsLoadingCancelled] = useState(false)
   const [userRole, setUserRole] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
   const [showCancelDialog, setShowCancelDialog] = useState(false)
@@ -38,9 +55,9 @@ export default function Home() {
   const navigate = useNavigate()
 
   // mappings...
-  const materialTypeMap = { roda: { en: "Roda", np: "रोडा" }, /*...*/ }
-  const regionMap = { local: { en: "Local", np: "स्थानीय" }, /*...*/ }
-  const vehicleSizeMap = { "260 cubic feet": { en: "260 cubic feet", np: "२६० घन फिट" }, /*...*/ }
+  const materialTypeMap = { roda: { en: "Roda", np: "रोडा" } }
+  const regionMap = { local: { en: "Local", np: "स्थानीय" } }
+  const vehicleSizeMap = { "260 cubic feet": { en: "260 cubic feet", np: "२६० घन फिट" } }
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken")
@@ -58,16 +75,17 @@ export default function Home() {
     }
   }
 
-  const fetchBills = async () => {
+  // Optimized fetch functions using new endpoints
+  const fetchActiveShipments = useCallback(async () => {
     try {
       setIsLoading(true)
-      const res = await api.get("/bills/bills/")
-      const data = res.data
+      const params = new URLSearchParams()
+      if (searchQuery.trim()) {
+        params.append('search', searchQuery.trim())
+      }
       
-      // Handle both paginated and non-paginated responses
-      const bills = data.results || data
-      
-      const converted = bills.map(b => ({
+      const res = await api.get(`/bills/bills/active/?${params}`)
+      const converted = res.data.results.map(b => ({
         ...b,
         vehicleNumber: b.vehicle_number,
         dateIssued: b.date_issued,
@@ -77,37 +95,113 @@ export default function Home() {
         billIssueTime: new Date(b.date_issued).toLocaleString("en-US"),
       }))
       
-      const pending = converted.filter(b => b.status === "pending")
-      const completed = converted.filter(b => b.status === "completed")
-      const cancelled = converted.filter(b => b.status === "cancelled")
-      
-      setUserShipments(pending)
-      setCompletedUserShipments(completed)
-      setCancelledUserShipments(cancelled)
+      setActiveShipments(converted)
+      setActiveCount(res.data.count)
     } catch (error) {
-      console.error("Error fetching bills:", error)
-      // Reset to empty arrays on error instead of using localStorage
-      setUserShipments([])
-      setCompletedUserShipments([])
-      setCancelledUserShipments([])
+      console.error("Error fetching active bills:", error)
+      setActiveShipments([])
+      setActiveCount(0)
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [ searchQuery])
 
-  useEffect(() => {
-    fetchBills()
-    fetchUserRole()
-    window.addEventListener("focus", fetchBills)
-    return () => {
-      window.removeEventListener("focus", fetchBills)
+  const fetchCompletedShipments = useCallback(async (page = 1) => {
+    try {
+      setIsLoadingCompleted(true)
+      const params = new URLSearchParams()
+      params.append('page', page.toString())
+      if (searchQuery.trim()) {
+        params.append('search', searchQuery.trim())
+      }
+      
+      const res = await api.get(`/bills/bills/completed/?${params}`)
+      const converted = res.data.results.map(b => ({
+        ...b,
+        vehicleNumber: b.vehicle_number,
+        dateIssued: b.date_issued,
+        billNumber: b.code,
+        cargo: b.material,
+        expectedTime: b.eta,
+        billIssueTime: new Date(b.date_issued).toLocaleString("en-US"),
+      }))
+      
+      setCompletedShipments(converted)
+      setCompletedPage(page)
+      setCompletedTotalCount(res.data.count)
+      setCompletedTotalPages(Math.ceil(res.data.count / 20))
+    } catch (error) {
+      console.error("Error fetching completed bills:", error)
+      setCompletedShipments([])
+      setCompletedTotalCount(0)
+    } finally {
+      setIsLoadingCompleted(false)
     }
-  }, [])
+  }, [searchQuery])
 
-  const updateBillStatus = async (id, status, code) => {
-    const res = await api.patch(`/bills/bills/${id}/`, { status, code })
-    return res.data
-  }
+  const fetchCancelledShipments = useCallback(async (page = 1) => {
+    try {
+      setIsLoadingCancelled(true)
+      const params = new URLSearchParams()
+      params.append('page', page.toString())
+      if (searchQuery.trim()) {
+        params.append('search', searchQuery.trim())
+      }
+      
+      const res = await api.get(`/bills/bills/cancelled/?${params}`)
+      const converted = res.data.results.map(b => ({
+        ...b,
+        vehicleNumber: b.vehicle_number,
+        dateIssued: b.date_issued,
+        billNumber: b.code,
+        cargo: b.material,
+        expectedTime: b.eta,
+        billIssueTime: new Date(b.date_issued).toLocaleString("en-US"),
+      }))
+      
+      setCancelledShipments(converted)
+      setCancelledPage(page)
+      setCancelledTotalCount(res.data.count)
+      setCancelledTotalPages(Math.ceil(res.data.count / 20))
+    } catch (error) {
+      console.error("Error fetching cancelled bills:", error)
+      setCancelledShipments([])
+      setCancelledTotalCount(0)
+    } finally {
+      setIsLoadingCancelled(false)
+    }
+  }, [searchQuery])
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchActiveShipments()
+    fetchCompletedShipments(1)
+    fetchCancelledShipments(1)
+    fetchUserRole()
+  }, [fetchActiveShipments, fetchCompletedShipments, fetchCancelledShipments])
+
+  // Refresh data on window focus
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchActiveShipments()
+      fetchCompletedShipments(completedPage)
+      fetchCancelledShipments(cancelledPage)
+    }
+    
+    window.addEventListener("focus", handleFocus)
+    return () => window.removeEventListener("focus", handleFocus)
+  }, [fetchActiveShipments, fetchCompletedShipments, fetchCancelledShipments, completedPage, cancelledPage])
+
+  // Search effect with debouncing
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchActiveShipments()
+      fetchCompletedShipments(1)
+      fetchCancelledShipments(1)
+    }, 300)
+
+    return () => clearTimeout(timeoutId)
+  }, [searchQuery, fetchActiveShipments, fetchCompletedShipments, fetchCancelledShipments])
 
   const handleTruckClick = truck => setSelectedTruck(truck)
   const closeDetails = () => setSelectedTruck(null)
@@ -116,23 +210,22 @@ export default function Home() {
     try {
       setShowScanner(false)
       
-      // Call the backend scan endpoint to validate and process the barcode
       const response = await api.post('/bills/scan/', { code: scannedCode })
       
-      // Show success feedback immediately
       setScanResult({ 
         type: 'success', 
         message: response.data.message || 'Bill completed successfully!', 
         show: true 
       })
       
-      // If successful, refresh the bills to update the UI
-      await fetchBills()
+      // Refresh active and completed shipments after successful scan
+      await fetchActiveShipments()
+      await fetchCompletedShipments(1)
       
       // Find the completed bill to show details
-      const completedBill = completedUserShipments.find(t => 
+      const completedBill = completedShipments.find(t => 
         (t.billNumber || "").toLowerCase() === scannedCode.toLowerCase()
-      ) || userShipments.find(t => 
+      ) || activeShipments.find(t => 
         (t.billNumber || "").toLowerCase() === scannedCode.toLowerCase()
       )
       
@@ -199,20 +292,6 @@ export default function Home() {
   const formatDateTime = dt =>
     new Date(dt).toLocaleDateString("en-US", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" })
 
-  const filterBills = bills =>
-    searchQuery
-      ? bills.filter(b =>
-          b.vehicleNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          b.destination.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          b.cargo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          b.billNumber.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      : bills
-
-  const filteredActive = filterBills(userShipments)
-  const filteredCompleted = filterBills(completedUserShipments)
-  const filteredCancelled = filterBills(cancelledUserShipments)
-
   const CompactBillCard = ({ truck, isCompleted=false, isCancelled=false }) => {
     const overdue = !isCompleted && new Date() > new Date(truck.expectedTime)
     const local = truck.region === "local"
@@ -246,10 +325,6 @@ export default function Home() {
             <div className="ml-2 px-2 py-1 rounded-full text-xs font-medium">{truck.modified_by_name}</div>
             </div>
           )}
-          
-          {/* <div className="flex flex-col items-end gap-1"> */}
-            {/* {userRole === "Admin" && <div className="font-mono text-xs text-gray-500">{truck.billNumber}</div>} */}
-          {/* </div> */}
         </div>
         <div className="text-xs text-gray-600 space-y-1">
           <div className="flex justify-between items-center flex-wrap gap-1">
@@ -272,7 +347,10 @@ export default function Home() {
         code: cancellingTruck.billNumber 
       })
       
-      await fetchBills()
+      // Refresh data after cancellation
+      await fetchActiveShipments()
+      await fetchCancelledShipments(1)
+      
       setShowCancelDialog(false)
       setCancellingTruck(null)
       setSelectedTruck(null)
@@ -289,9 +367,9 @@ export default function Home() {
         showSearch
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        activeCount={filteredActive.length}
-        completedCount={filteredCompleted.length}
-        cancelledCount={filteredCancelled.length}
+        activeCount={activeCount}
+        completedCount={completedTotalCount}
+        cancelledCount={cancelledTotalCount}
         onScanClick={()=>setShowScanner(true)}
       />
 
@@ -305,19 +383,19 @@ export default function Home() {
               {/* Top row: Active and Completed side by side */}
               <div className="grid grid-cols-2 gap-4 h-[calc(85vh-40px)]">
                 {/* Active */}
-                <div className="flex flex-col overflow-scroll bg-white rounded-lg shadow-sm border h-full">
+                <div className="flex flex-col overflow-hidden bg-white rounded-lg shadow-sm border h-full">
                   <div className="flex items-center justify-between p-3 border-b bg-blue-100 rounded-t-lg">
                     <h2 className="flex items-center gap-2 font-semibold">
                       <Clock className="h-5 w-5 text-blue-600"/> Active Shipments
                     </h2>
-                    <span className="text-sm text-gray-500">{filteredActive.length} bills</span>
+                    <span className="text-sm text-gray-500">{activeCount} bills</span>
                   </div>
                   <div className="flex-1 overflow-hidden p-3">
                     <div className="h-full overflow-y-auto space-y-2 pr-2">
-                      {filteredActive.length === 0 ? (
+                      {activeShipments.length === 0 ? (
                         <p className="text-center text-gray-500 py-8">No active shipments</p>
                       ) : (
-                        filteredActive.map(truck => (
+                        activeShipments.map(truck => (
                           <CompactBillCard key={truck.id} truck={truck} />
                         ))
                       )}
@@ -326,45 +404,76 @@ export default function Home() {
                 </div>
 
                 {/* Completed */}
-                <div className="flex flex-col bg-white rounded-lg shadow-sm border overflow-scroll h-full">
+                <div className="flex flex-col bg-white rounded-lg shadow-sm border overflow-hidden h-full">
                   <div className="flex items-center justify-between p-3 border-b bg-green-100 rounded-t-lg">
                     <h2 className="flex items-center gap-2 font-semibold">
                       <CheckCircle className="h-5 w-5 text-green-600"/> Completed Shipments
                     </h2>
-                    <span className="text-sm text-gray-500">{filteredCompleted.length} bills</span>
+                    <span className="text-sm text-gray-500">{completedTotalCount} bills</span>
                   </div>
-                  <div className="flex-1 overflow-hidden p-3">
-                    <div className="h-full overflow-y-auto space-y-2 pr-2">
-                      {filteredCompleted.length === 0 ? (
-                        <p className="text-center text-gray-500 py-8">No completed shipments</p>
-                      ) : (
-                        filteredCompleted.map(truck => (
-                          <CompactBillCard key={truck.id} truck={truck} isCompleted />
-                        ))
-                      )}
-
+                  <div className="flex-1 overflow-hidden">
+                    <div className="h-full flex flex-col">
+                      <div className="flex-1 overflow-y-auto p-3">
+                        <div className="space-y-2 pr-2">
+                          {isLoadingCompleted ? (
+                            <div className="flex justify-center py-8">
+                              <div className="animate-spin h-5 w-5 border-b-2 border-gray-900"></div>
+                            </div>
+                          ) : completedShipments.length === 0 ? (
+                            <p className="text-center text-gray-500 py-8">No completed shipments</p>
+                          ) : (
+                            completedShipments.map(truck => (
+                              <CompactBillCard key={truck.id} truck={truck} isCompleted />
+                            ))
+                          )}
+                        </div>
+                      </div>
+                      <Pagination
+                        currentPage={completedPage}
+                        totalPages={completedTotalPages}
+                        onPageChange={fetchCompletedShipments}
+                        totalCount={completedTotalCount}
+                        pageSize={20}
+                        isLoading={isLoadingCompleted}
+                      />
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Bottom row: Cancelled full width */}
-              <div className="flex flex-col bg-white rounded-lg w-[calc(50vw-25px)] shadow-sm border overflow-scroll h-[calc(40vh-40px)]">
+              <div className="flex flex-col bg-white rounded-lg w-[calc(50vw-25px)] shadow-sm border overflow-hidden h-[calc(40vh-40px)]">
                 <div className="flex items-center justify-between p-3 border-b bg-red-100 rounded-t-lg">
                   <h2 className="flex items-center gap-2 font-semibold">
                     <XCircle className="h-5 w-5 text-red-600"/> Cancelled Shipments
                   </h2>
-                  <span className="text-sm text-gray-500">{filteredCancelled.length} bills</span>
+                  <span className="text-sm text-gray-500">{cancelledTotalCount} bills</span>
                 </div>
-                <div className="flex-1 overflow-hidden p-3">
-                  <div className="h-full overflow-y-auto space-y-2 pr-2">
-                    {filteredCancelled.length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">No cancelled shipments</p>
-                    ) : (
-                      filteredCancelled.map(truck => (
-                        <CompactBillCard key={truck.id} truck={truck} isCancelled />
-                      ))
-                    )}
+                <div className="flex-1 overflow-hidden">
+                  <div className="h-full flex flex-col">
+                    <div className="flex-1 overflow-y-auto p-3">
+                      <div className="space-y-2 pr-2">
+                        {isLoadingCancelled ? (
+                          <div className="flex justify-center py-8">
+                            <div className="animate-spin h-5 w-5 border-b-2 border-gray-900"></div>
+                          </div>
+                        ) : cancelledShipments.length === 0 ? (
+                          <p className="text-center text-gray-500 py-8">No cancelled shipments</p>
+                        ) : (
+                          cancelledShipments.map(truck => (
+                            <CompactBillCard key={truck.id} truck={truck} isCancelled />
+                          ))
+                        )}
+                      </div>
+                    </div>
+                    <Pagination
+                      currentPage={cancelledPage}
+                      totalPages={cancelledTotalPages}
+                      onPageChange={fetchCancelledShipments}
+                      totalCount={cancelledTotalCount}
+                      pageSize={20}
+                      isLoading={isLoadingCancelled}
+                    />
                   </div>
                 </div>
               </div>
@@ -378,14 +487,14 @@ export default function Home() {
                   <h2 className="flex items-center gap-2 font-semibold text-sm sm:text-base">
                     <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600"/> Active Shipments
                   </h2>
-                  <span className="text-xs sm:text-sm text-gray-500">{filteredActive.length} bills</span>
+                  <span className="text-xs sm:text-sm text-gray-500">{activeCount} bills</span>
                 </div>
                 <div className="p-3 max-h-80 overflow-y-auto">
-                  {filteredActive.length === 0 ? (
+                  {activeShipments.length === 0 ? (
                     <p className="text-center text-gray-500 py-8 text-sm">No active shipments</p>
                   ) : (
                     <div className="space-y-2">
-                      {filteredActive.map(truck => (
+                      {activeShipments.map(truck => (
                         <CompactBillCard key={truck.id} truck={truck} />
                       ))}
                     </div>
@@ -399,18 +508,34 @@ export default function Home() {
                   <h2 className="flex items-center gap-2 font-semibold text-sm sm:text-base">
                     <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600"/> Completed Shipments
                   </h2>
-                  <span className="text-xs sm:text-sm text-gray-500">{filteredCompleted.length} bills</span>
+                  <span className="text-xs sm:text-sm text-gray-500">{completedTotalCount} bills</span>
                 </div>
-                <div className="p-3 max-h-80 overflow-y-auto">
-                  {filteredCompleted.length === 0 ? (
-                    <p className="text-center text-gray-500 py-8 text-sm">No completed shipments</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {filteredCompleted.map(truck => (
-                        <CompactBillCard key={truck.id} truck={truck} isCompleted />
-                      ))}
+                <div className="max-h-80 overflow-hidden">
+                  <div className="flex flex-col h-full">
+                    <div className="flex-1 overflow-y-auto p-3">
+                      {isLoadingCompleted ? (
+                        <div className="flex justify-center py-8">
+                          <div className="animate-spin h-5 w-5 border-b-2 border-gray-900"></div>
+                        </div>
+                      ) : completedShipments.length === 0 ? (
+                        <p className="text-center text-gray-500 py-8 text-sm">No completed shipments</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {completedShipments.map(truck => (
+                            <CompactBillCard key={truck.id} truck={truck} isCompleted />
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
+                    <Pagination
+                      currentPage={completedPage}
+                      totalPages={completedTotalPages}
+                      onPageChange={fetchCompletedShipments}
+                      totalCount={completedTotalCount}
+                      pageSize={20}
+                      isLoading={isLoadingCompleted}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -420,18 +545,34 @@ export default function Home() {
                   <h2 className="flex items-center gap-2 font-semibold text-sm sm:text-base">
                     <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600"/> Cancelled Shipments
                   </h2>
-                  <span className="text-xs sm:text-sm text-gray-500">{filteredCancelled.length} bills</span>
+                  <span className="text-xs sm:text-sm text-gray-500">{cancelledTotalCount} bills</span>
                 </div>
-                <div className="p-3 max-h-60 overflow-y-auto">
-                  {filteredCancelled.length === 0 ? (
-                    <p className="text-center text-gray-500 py-8 text-sm">No cancelled shipments</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {filteredCancelled.map(truck => (
-                        <CompactBillCard key={truck.id} truck={truck} isCancelled />
-                      ))}
+                <div className="max-h-60 overflow-hidden">
+                  <div className="flex flex-col h-full">
+                    <div className="flex-1 overflow-y-auto p-3">
+                      {isLoadingCancelled ? (
+                        <div className="flex justify-center py-8">
+                          <div className="animate-spin h-5 w-5 border-b-2 border-gray-900"></div>
+                        </div>
+                      ) : cancelledShipments.length === 0 ? (
+                        <p className="text-center text-gray-500 py-8 text-sm">No cancelled shipments</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {cancelledShipments.map(truck => (
+                            <CompactBillCard key={truck.id} truck={truck} isCancelled />
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
+                    <Pagination
+                      currentPage={cancelledPage}
+                      totalPages={cancelledTotalPages}
+                      onPageChange={fetchCancelledShipments}
+                      totalCount={cancelledTotalCount}
+                      pageSize={20}
+                      isLoading={isLoadingCancelled}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -441,7 +582,6 @@ export default function Home() {
 
       {showScanner && <BarcodeScanner onScan={handleScan} onClose={()=>setShowScanner(false)} />}
       
-      {/* Big Prominent Scan Result Notification */}
       <ScanNotification 
         type={scanResult?.type}
         message={scanResult?.message}
@@ -451,7 +591,6 @@ export default function Home() {
       {!!selectedTruck && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeDetails}>
           <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto shadow-xl border border-gray-200" onClick={e=>e.stopPropagation()}>
-            {/* Compact Header */}
             <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Truck className="h-5 w-5 text-gray-600" />
@@ -515,7 +654,6 @@ export default function Home() {
                   <p className="text-gray-900 font-medium">{selectedTruck.issued_by_name || 'System'}</p>
                 </div>
 
-   
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2 text-gray-600">
                     <Clock className="h-4 w-4" />
@@ -545,8 +683,7 @@ export default function Home() {
                 )}
               </div>
 
-              {/* Personnel */}
-                            {selectedTruck.modified_by && (
+              {selectedTruck.modified_by && (
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2 text-gray-600">
                       <User className="h-4 w-4" />

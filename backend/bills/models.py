@@ -45,3 +45,19 @@ class Bill(models.Model):
     modified_by = models.ForeignKey('enterprise.Person', on_delete=models.CASCADE, related_name='bills_modified', null=True, blank=True)
     modified_date = models.DateTimeField(null=True, blank=True)
     # paid = models.BooleanField(default=False)
+
+    class Meta:
+        # Add database indexes for performance optimization
+        indexes = [
+            models.Index(fields=['status', 'issued_by']),
+            models.Index(fields=['date_issued']),
+            models.Index(fields=['modified_date']),
+            models.Index(fields=['status', 'date_issued']),
+            models.Index(fields=['code']),
+            models.Index(fields=['vehicle_number']),
+        ]
+        # Order by latest first by default
+        ordering = ['-date_issued']
+
+    def __str__(self):
+        return f"Bill {self.code} - {self.vehicle_number}"
