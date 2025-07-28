@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Bill
 from codes.models import Barcode
 from enterprise.models import Person
+from django.utils import timezone
 
 class BillSerializer(serializers.ModelSerializer):
     issued_by_name = serializers.SerializerMethodField()
@@ -31,6 +32,13 @@ class BillSerializer(serializers.ModelSerializer):
         bill = Bill.objects.create(**validated_data)
         barcode.associated_bill = bill
         barcode.save()
+        if bill.region == 'local':
+            bill.status = 'completed'
+            bill.completed_by = bill.issued_by
+            bill.completed_at = timezone.now()
+            barcode.status = 'used'
+            barcode.save()
+            bill.save()
         return bill
     
     def update(self, instance, validated_data):

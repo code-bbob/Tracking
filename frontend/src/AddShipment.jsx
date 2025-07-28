@@ -17,6 +17,7 @@ export default function AddShipment() {
   const api = useAxios()
   const [form, setForm] = useState({
     code: "",
+    customerName: "",
     vehicleNumber: "",
     amount: "",
     issueLocation: "",
@@ -31,7 +32,30 @@ export default function AddShipment() {
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState({})
   const [touched, setTouched] = useState({})
+  const [userProfile, setUserProfile] = useState(null)
   const navigate = useNavigate()
+
+  // Fetch user profile to auto-fill location
+  const fetchUserProfile = async () => {
+    try {
+      const response = await api.get('/enterprise/profile/')
+      setUserProfile(response.data)
+      // Auto-fill issue location if user has a location
+      if (response.data.location) {
+        setForm(prev => ({
+          ...prev,
+          issueLocation: response.data.location
+        }))
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error)
+    }
+  }
+
+  // Fetch user profile on component mount
+  useEffect(() => {
+    fetchUserProfile()
+  }, [])
 
   const materialTypes = [
     { en: "Roda", np: "रोडा", value: "roda" },
@@ -44,6 +68,7 @@ export default function AddShipment() {
     { en: "Base/Subbase", np: "बेस/सबबेस", value: "base/subbase" },
     { en: "Itta", np: "इट्टा", value: "itta" },
     { en: "Kawadi", np: "कवाडी", value: "kawadi" },
+    { en: "Kaath/Daura", np: "काठ/दाउरा", value: "kaath/daura" },
     { en: "Other", np: "अन्य", value: "other" },
   ]
 
@@ -73,10 +98,10 @@ export default function AddShipment() {
     switch (name) {
       case "code":
         return !value.trim() ? "Bill code is required" : ""
+      case "customerName":
+        return !value.trim() ? "Customer name is required" : ""
       case "vehicleNumber":
-        return !value.trim() ? "Vehicle number is required" : 
-               !/^[A-Z]{2}\s*\d+\s*[A-Z]{2,3}\s*\d+$/i.test(value.replace(/\s/g, '')) ? 
-               "Invalid vehicle number format (e.g., BA 1 KHA 1234)" : ""
+        return !value.trim() ? "Vehicle number is required" : ""
       case "amount":
         return !value || parseFloat(value) <= 0 ? "Amount must be greater than 0" : ""
       case "material":
@@ -100,6 +125,10 @@ export default function AddShipment() {
   const validateForm = () => {
     const newErrors = {}
     Object.keys(form).forEach(key => {
+      // Skip validation for issueLocation if it's auto-filled from user profile
+      if (key === "issueLocation" && userProfile?.location) {
+        return
+      }
       const error = validateField(key, form[key])
       if (error) newErrors[key] = error
     })
@@ -115,22 +144,13 @@ export default function AddShipment() {
 
   const calculateETA = (h) => (h ? new Date(Date.now() + h * 3600000).toISOString() : "")
 
-  const formatVehicleNumber = (value) => {
-    // Auto-format vehicle number as user types
-    const cleaned = value.replace(/[^a-zA-Z0-9]/g, '')
-    if (cleaned.length <= 2) return cleaned.toUpperCase()
-    if (cleaned.length <= 3) return `${cleaned.slice(0, 2)} ${cleaned.slice(2)}`.toUpperCase()
-    if (cleaned.length <= 6) return `${cleaned.slice(0, 2)} ${cleaned.slice(2, 3)} ${cleaned.slice(3, 6)}`.toUpperCase()
-    return `${cleaned.slice(0, 2)} ${cleaned.slice(2, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6, 10)}`.toUpperCase()
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     
     if (!validateForm()) {
       setStatus({
         type: "error",
-        message: "Please fix all errors before submitting"
+        message: "Please fill all required fields"
       })
       return
     }
@@ -141,6 +161,7 @@ export default function AddShipment() {
     try {
       const payload = {
         code: form.code.trim(),
+        customer_name: form.customerName.trim(),
         vehicle_number: form.vehicleNumber.trim(),
         amount: Number.parseFloat(form.amount) || 0,
         issue_location: form.issueLocation.trim(),
@@ -162,9 +183,10 @@ export default function AddShipment() {
       // Reset form
       setForm({
         code: "",
+        customerName: "",
         vehicleNumber: "",
         amount: "",
-        issueLocation: "",
+        issueLocation: userProfile?.location || "", // Keep the auto-filled location
         material: "",
         destination: "",
         vehicleSize: "",
@@ -175,16 +197,34 @@ export default function AddShipment() {
       setTouched({})
       
       // Redirect after short delay to show success message
-      setTimeout(() => navigate("/"), 2000)
+      setTimeout(() => navigate("/"), 200)
       
     } catch (err) {
       console.error('Submission error:', err)
-      const msg =
-        err.response?.data?.non_field_errors?.[0] ||
-        Object.values(err.response?.data || {})[0]?.[0] ||
-        err.message ||
-        "Error creating shipment"
-      setStatus({ type: "error", message: msg })
+      let errorMessage = "Error creating shipment"
+      
+      if (err.response?.data) {
+        // Handle different types of error responses from backend
+        if (typeof err.response.data === 'string') {
+          errorMessage = err.response.data
+        } else if (err.response.data.non_field_errors) {
+          errorMessage = err.response.data.non_field_errors[0]
+        } else if (err.response.data.detail) {
+          errorMessage = err.response.data.detail
+        } else {
+          // Handle field-specific errors or other error formats
+          const firstError = Object.values(err.response.data)[0]
+          if (Array.isArray(firstError)) {
+            errorMessage = firstError[0]
+          } else if (typeof firstError === 'string') {
+            errorMessage = firstError
+          }
+        }
+      } else if (err.message) {
+        errorMessage = err.message
+      }
+      
+      setStatus({ type: "error", message: errorMessage })
     } finally {
       setLoading(false)
     }
@@ -197,29 +237,6 @@ export default function AddShipment() {
       <Navbar title="Add Shipment" subtitle="Create a new shipment entry" showBackButton />
 
       <div className="max-w-4xl mx-auto p-4 space-y-6">
-        {/* Status Messages */}
-        {status.message && (
-          <Alert className={status.type === "success" ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}>
-            <div className="flex items-center gap-2">
-              {status.type === "success" ? 
-                <CheckCircle className="h-4 w-4 text-green-600" /> : 
-                <AlertCircle className="h-4 w-4 text-red-600" />
-              }
-              <AlertDescription className={status.type === "success" ? "text-green-700" : "text-red-700"}>
-                {status.message}
-              </AlertDescription>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setStatus({ type: "", message: "" })}
-                className="ml-auto h-6 w-6 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          </Alert>
-        )}
-
         <Card className="shadow-sm">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-xl">
@@ -239,7 +256,7 @@ export default function AddShipment() {
                   </h3>
                 </div>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   <div className="space-y-2">
                     <Label className="text-sm font-medium flex items-center gap-1">
                       Bill Code | बिल कोड 
@@ -276,14 +293,34 @@ export default function AddShipment() {
 
                   <div className="space-y-2">
                     <Label className="text-sm font-medium flex items-center gap-1">
+                      Customer Name | ग्राहकको नाम 
+                      <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      value={form.customerName}
+                      onChange={(e) => updateField("customerName", e.target.value)}
+                      onBlur={() => handleBlur("customerName")}
+                      placeholder="Enter customer name"
+                      className={getFieldError("customerName") ? "border-red-300 focus:border-red-500" : ""}
+                    />
+                    {getFieldError("customerName") && (
+                      <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {errors.customerName}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-1">
                       Vehicle Number | गाडी नम्बर 
                       <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       value={form.vehicleNumber}
-                      onChange={(e) => updateField("vehicleNumber", formatVehicleNumber(e.target.value))}
+                      onChange={(e) => updateField("vehicleNumber", e.target.value)}
                       onBlur={() => handleBlur("vehicleNumber")}
-                      placeholder="BA 1 KHA 1234"
+                      placeholder="Enter vehicle number"
                       className={getFieldError("vehicleNumber") ? "border-red-300 focus:border-red-500" : ""}
                       maxLength={15}
                     />
@@ -435,25 +472,28 @@ export default function AddShipment() {
                 </div>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center gap-1">
-                      Issue Location | जारी स्थान 
-                      <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      value={form.issueLocation}
-                      onChange={(e) => updateField("issueLocation", e.target.value)}
-                      onBlur={() => handleBlur("issueLocation")}
-                      placeholder="Pickup location"
-                      className={getFieldError("issueLocation") ? "border-red-300 focus:border-red-500" : ""}
-                    />
-                    {getFieldError("issueLocation") && (
-                      <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" />
-                        {errors.issueLocation}
-                      </p>
-                    )}
-                  </div>
+                  {/* Only show issue location field if not auto-filled */}
+                  {!userProfile?.location && (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium flex items-center gap-1">
+                        Issue Location | जारी स्थान 
+                        <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        value={form.issueLocation}
+                        onChange={(e) => updateField("issueLocation", e.target.value)}
+                        onBlur={() => handleBlur("issueLocation")}
+                        placeholder="Pickup location"
+                        className={getFieldError("issueLocation") ? "border-red-300 focus:border-red-500" : ""}
+                      />
+                      {getFieldError("issueLocation") && (
+                        <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {errors.issueLocation}
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label className="text-sm font-medium flex items-center gap-1">
@@ -507,15 +547,86 @@ export default function AddShipment() {
               </div>
 
               {/* Form Summary */}
-              {Object.values(form).some(value => value.trim() !== "") && (
+              {Object.values(form).some(value => value && value.toString().trim() !== "") && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="font-medium text-blue-900 mb-2">Shipment Preview</h4>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    {form.code && <div><span className="text-blue-700">Code:</span> {form.code}</div>}
-                    {form.vehicleNumber && <div><span className="text-blue-700">Vehicle:</span> {form.vehicleNumber}</div>}
-                    {form.material && <div><span className="text-blue-700">Material:</span> {materialTypes.find(m => m.value === form.material)?.en}</div>}
-                    {form.amount && <div><span className="text-blue-700">Amount:</span> NPR {parseFloat(form.amount).toLocaleString()}</div>}
+                  <h4 className="font-medium text-blue-900 mb-3">Shipment Preview | ढुवानी पूर्वावलोकन</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+                    {form.code && (
+                      <div className="flex flex-col">
+                        <span className="text-blue-700 font-medium">Code | कोड:</span>
+                        <span className="text-gray-800">{form.code}</span>
+                      </div>
+                    )}
+                    {form.customerName && (
+                      <div className="flex flex-col">
+                        <span className="text-blue-700 font-medium">Customer | ग्राहक:</span>
+                        <span className="text-gray-800">{form.customerName}</span>
+                      </div>
+                    )}
+                    {form.vehicleNumber && (
+                      <div className="flex flex-col">
+                        <span className="text-blue-700 font-medium">Vehicle | गाडी:</span>
+                        <span className="text-gray-800">{form.vehicleNumber}</span>
+                      </div>
+                    )}
+                    {form.material && (
+                      <div className="flex flex-col">
+                        <span className="text-blue-700 font-medium">Material | सामग्री:</span>
+                        <span className="text-gray-800">{materialTypes.find(m => m.value === form.material)?.en}</span>
+                      </div>
+                    )}
+                    {form.amount && (
+                      <div className="flex flex-col">
+                        <span className="text-blue-700 font-medium">Amount | रकम:</span>
+                        <span className="text-gray-800">NPR {parseFloat(form.amount).toLocaleString()}</span>
+                      </div>
+                    )}
+                    {(form.issueLocation || userProfile?.location) && (
+                      <div className="flex flex-col">
+                        <span className="text-blue-700 font-medium">From | बाट:</span>
+                        <span className="text-gray-800">{form.issueLocation || userProfile?.location}</span>
+                      </div>
+                    )}
+                    {form.destination && (
+                      <div className="flex flex-col">
+                        <span className="text-blue-700 font-medium">To | सम्म:</span>
+                        <span className="text-gray-800">{form.destination}</span>
+                      </div>
+                    )}
+                    {form.vehicleSize && (
+                      <div className="flex flex-col">
+                        <span className="text-blue-700 font-medium">Size | साइज:</span>
+                        <span className="text-gray-800">{vehicleSizes.find(s => s.value === form.vehicleSize)?.en}</span>
+                      </div>
+                    )}
+                    {form.region && (
+                      <div className="flex flex-col">
+                        <span className="text-blue-700 font-medium">Region | क्षेत्र:</span>
+                        <span className="text-gray-800">{regions.find(r => r.value === form.region)?.en}</span>
+                      </div>
+                    )}
+                    {form.etaHours && (
+                      <div className="flex flex-col">
+                        <span className="text-blue-700 font-medium">ETA | अपेक्षित समय:</span>
+                        <span className="text-gray-800">{form.etaHours} hours</span>
+                      </div>
+                    )}
                   </div>
+                </div>
+              )}
+
+              {/* Status Messages - Before Action Buttons */}
+              {status.message && status.type === "error" && (
+                <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  <span>{status.message}</span>
+                </div>
+              )}
+
+              {status.message && status.type === "success" && (
+                <div className="text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 flex-shrink-0" />
+                  <span>{status.message}</span>
                 </div>
               )}
 

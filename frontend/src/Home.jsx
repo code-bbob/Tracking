@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import BarcodeScanner from "./BarcodeScanner"
+import ScanNotification from "./components/ScanNotification" // Add this import
 import Navbar from "./components/Navbar"
 import { logout } from "./redux/accessSlice"
 import { useDispatch } from "react-redux"
@@ -23,6 +24,7 @@ export default function Home() {
   const api = useAxios()
   const [selectedTruck, setSelectedTruck] = useState(null)
   const [showScanner, setShowScanner] = useState(false)
+  const [scanResult, setScanResult] = useState(null) // { type: 'success'|'error', message: '', show: true }
   const [userShipments, setUserShipments] = useState([])
   const [completedUserShipments, setCompletedUserShipments] = useState([])
   const [cancelledUserShipments, setCancelledUserShipments] = useState([])
@@ -111,17 +113,76 @@ export default function Home() {
   const closeDetails = () => setSelectedTruck(null)
 
   const handleScan = async scannedCode => {
-    // search in pending
-    const found = userShipments.find(t =>
-      (t.billNumber||"").toLowerCase() === scannedCode.toLowerCase()
-    )
-    if (found) {
-      await updateBillStatus(found.id, "completed", scannedCode)
+    try {
+      setShowScanner(false)
+      
+      // Call the backend scan endpoint to validate and process the barcode
+      const response = await api.post('/bills/scan/', { code: scannedCode })
+      
+      // Show success feedback immediately
+      setScanResult({ 
+        type: 'success', 
+        message: response.data.message || 'Bill completed successfully!', 
+        show: true 
+      })
+      
+      // If successful, refresh the bills to update the UI
       await fetchBills()
+      
+      // Find the completed bill to show details
+      const completedBill = completedUserShipments.find(t => 
+        (t.billNumber || "").toLowerCase() === scannedCode.toLowerCase()
+      ) || userShipments.find(t => 
+        (t.billNumber || "").toLowerCase() === scannedCode.toLowerCase()
+      )
+      
+      if (completedBill) {
+        setSelectedTruck({ 
+          ...completedBill, 
+          status: "completed", 
+          completedTime: new Date().toLocaleString() 
+        })
+      }
+      
+    } catch (error) {
       setShowScanner(false)
-      setSelectedTruck({ ...found, status:"completed", completedTime: new Date().toLocaleString() })
-    } else {
-      setShowScanner(false)
+      
+      // Handle different types of errors from the backend with clearer messages
+      let errorMessage = "Unknown scan error occurred"
+      
+      if (error.response?.data?.error) {
+        const backendError = error.response.data.error
+        
+        // Make error messages more user-friendly and clear
+        if (backendError.includes("not found") || backendError.includes("does not exist")) {
+          errorMessage = "❌ Invalid Barcode - Code not found in system"
+        } else if (backendError.includes("not active")) {
+          errorMessage = "⚠️ Inactive Barcode - This code is no longer active"
+        } else if (backendError.includes("already completed")) {
+          errorMessage = "✅ Already Completed - This shipment was already processed"
+        } else if (backendError.includes("not issued to you")) {
+          errorMessage = "🚫 Access Denied - This barcode was not issued to your organization"
+        } else {
+          errorMessage = `❌ Error: ${backendError}`
+        }
+      } else if (error.response?.status === 404) {
+        errorMessage = "❌ Barcode Not Found - Invalid or unrecognized code"
+      } else if (error.response?.status === 400) {
+        errorMessage = "⚠️ Invalid Request - Barcode cannot be processed"
+      } else if (error.response?.status === 403) {
+        errorMessage = "🚫 Access Denied - You don't have permission to scan this code"
+      } else if (error.message?.includes("Network Error")) {
+        errorMessage = "📡 Connection Error - Check your internet connection"
+      } else if (error.message) {
+        errorMessage = `❌ Error: ${error.message}`
+      }
+      
+      // Show clear error feedback
+      setScanResult({ 
+        type: 'error', 
+        message: errorMessage, 
+        show: true 
+      })
     }
   }
 
@@ -158,7 +219,7 @@ export default function Home() {
     return (
       <div
         className={`p-3 border rounded-lg cursor-pointer hover:shadow-sm transition-all
-          ${overdue ? "bg-red-50 border-red-200": local ? "bg-yellow-50 border-yellow-200" : "bg-white border-gray-200"}`}
+          ${overdue ? "bg-red-50 border-red-200": local ? "bg-yellow-200 border-yellow-200" : "bg-white border-gray-200"}`}
         onClick={()=>handleTruckClick(truck)}
       >
         <div className="flex justify-between items-start mb-2">
@@ -167,15 +228,34 @@ export default function Home() {
             <span className="truncate flex-1 mr-2">{truck.cargo} - </span>
             <span className="whitespace-nowrap">Rs. {truck.amount}</span>
           </div>
-          <div className="flex flex-col items-end gap-1">
-            {userRole === "Admin" && <div className="font-mono text-xs text-gray-500">{truck.billNumber}</div>}
-          </div>
+          {truck.status === 'completed' && (
+            <div>
+            <div className="text-xs">Checked by:</div>
+            <div className="ml-2 px-2 py-1 rounded-full text-xs font-medium">{truck.modified_by_name}</div>
+            </div>
+          )}
+           {truck.status === 'pending' && (
+            <div>
+            <div className="text-xs">Issued by:</div>
+            <div className="ml-2 px-2 py-1 rounded-full text-xs font-medium">{truck.issued_by_name}</div>
+            </div>
+          )}
+            {truck.status === 'cancelled' && (
+            <div>
+            <div className="text-xs">Cancelled by:</div>
+            <div className="ml-2 px-2 py-1 rounded-full text-xs font-medium">{truck.modified_by_name}</div>
+            </div>
+          )}
+          
+          {/* <div className="flex flex-col items-end gap-1"> */}
+            {/* {userRole === "Admin" && <div className="font-mono text-xs text-gray-500">{truck.billNumber}</div>} */}
+          {/* </div> */}
         </div>
         <div className="text-xs text-gray-600 space-y-1">
           <div className="flex justify-between items-center flex-wrap gap-1">
             <span className="text-xs">{formatDateTime(truck.dateIssued)}</span>
             <span className="text-xs truncate max-w-[100px] sm:max-w-none">{truck.destination}</span>
-            <span className="text-xs">{formatDateTime(isCompleted ? truck.completedTime : truck.expectedTime)}</span>
+            <span className="text-xs">{formatDateTime(isCompleted || isCancelled ? truck.modified_date: truck.expectedTime)}</span>
           </div>
         </div>
       </div>
@@ -223,7 +303,7 @@ export default function Home() {
             {/* Desktop Layout - 2 columns for Active and Completed, then Cancelled below */}
             <div className="hidden lg:block space-y-4">
               {/* Top row: Active and Completed side by side */}
-              <div className="grid grid-cols-2 gap-4 h-[calc(75vh-40px)]">
+              <div className="grid grid-cols-2 gap-4 h-[calc(85vh-40px)]">
                 {/* Active */}
                 <div className="flex flex-col overflow-scroll bg-white rounded-lg shadow-sm border h-full">
                   <div className="flex items-center justify-between p-3 border-b bg-blue-100 rounded-t-lg">
@@ -262,6 +342,7 @@ export default function Home() {
                           <CompactBillCard key={truck.id} truck={truck} isCompleted />
                         ))
                       )}
+
                     </div>
                   </div>
                 </div>
@@ -359,6 +440,14 @@ export default function Home() {
       </div>
 
       {showScanner && <BarcodeScanner onScan={handleScan} onClose={()=>setShowScanner(false)} />}
+      
+      {/* Big Prominent Scan Result Notification */}
+      <ScanNotification 
+        type={scanResult?.type}
+        message={scanResult?.message}
+        onClose={() => setScanResult(null)}
+      />
+
       {!!selectedTruck && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeDetails}>
           <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto shadow-xl border border-gray-200" onClick={e=>e.stopPropagation()}>

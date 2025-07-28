@@ -15,10 +15,8 @@ class PersonView(APIView):
         # Only admins can access the persons list
         if user.person.role != 'Admin':
             return Response({'error': 'You do not have permission to view this resource.'}, status=403)
-        
         # Get all persons in the same enterprise
-        enterprise = user.person.enterprise
-        persons = Person.objects.filter(enterprise=enterprise)
+        persons = Person.objects.all()
         serializer = PersonSerializer(persons, many=True)
         return Response(serializer.data)
 

@@ -15,11 +15,9 @@ class IssueBarcodeView(APIView):
     def get(self, request):
         # Fetch all issued barcodes for the current user's enterprise with filtering, search, and pagination
         person = request.user.person
-        enterprise = person.enterprise
         
         # Start with base queryset
         queryset = Barcode.objects.filter(
-            assigned_to__enterprise=enterprise
         ).select_related('assigned_to', 'assigned_by').order_by('-created_at')
         
         # Filter by assigned_to if provided

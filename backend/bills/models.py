@@ -4,6 +4,7 @@ from django.db import models
 
 class Bill(models.Model):
     code = models.CharField(max_length=20)
+    customer_name = models.CharField(max_length=100)
     date_issued = models.DateTimeField(auto_now_add=True)
     amount = models.FloatField()
     issue_location = models.CharField(max_length=100)
@@ -20,6 +21,7 @@ class Bill(models.Model):
         ('base/subbase', 'Base/Subbase'),
         ('itta', 'Itta'),
         ('kawadi', 'Kawadi'),
+        ('kaath/daura', 'Kaath/Daura'),
         ('other', 'Other'),
     ])
     destination = models.CharField(max_length=100)

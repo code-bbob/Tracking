@@ -8,6 +8,8 @@ from .models import Bill
 from codes.models import Barcode
 from .serializers import BillSerializer
 from django.utils import timezone
+# import status
+from rest_framework import status
 
 class BillView(APIView):
     def get(self, request):
@@ -122,3 +124,32 @@ class BillView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+class ScanView(APIView):
+    def post(self, request):
+        code = request.data.get('code')
+        if not code:
+            return Response({"error": "Code is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        barcode = Barcode.objects.filter(code=code).first()
+        if not barcode:
+            return Response({"error": "Barcode not found"}, status=status.HTTP_404_NOT_FOUND)
+        if barcode and barcode.status != 'active':
+            return Response({"error": "Barcode is not active"}, status=status.HTTP_400_BAD_REQUEST)
+        bill = Bill.objects.filter(code=code).first()
+        if not bill:
+            return Response({"error": "Bill not found for this barcode"}, status=status.HTTP_404_NOT_FOUND)
+        if bill:
+            if bill.status == 'pending':
+                bill.status = 'completed'
+                bill.modified_by = request.user.person
+                bill.modified_date = timezone.now()
+                bill.save()
+                barcode.status = 'used'
+                barcode.save()
+                return Response({"message": "Bill completed successfully"}, status=status.HTTP_200_OK)
+            elif status == 'completed':
+                return Response({"error": "Bill is already completed"}, status=status.HTTP_400_BAD_REQUEST)
+        

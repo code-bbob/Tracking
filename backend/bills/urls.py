@@ -5,6 +5,7 @@ from . import analytics_views
 urlpatterns = [
     path('bills/', views.BillView.as_view(), name='bills'),
     path('bills/<int:pk>/', views.BillView.as_view(), name='bill_detail'),
+    path('scan/', views.ScanView.as_view(), name='scan'),
     
     # Analytics endpoints
     path('analytics/overview/', analytics_views.analytics_overview, name='analytics_overview'),

@@ -27,11 +27,8 @@ def analytics_overview(request):
         start_date = end_date - timedelta(days=days)
         
         # Get user's enterprise for filtering
-        user_enterprise = request.user.person.enterprise
-        
         # Filter bills by user's enterprise and date range
         bills_queryset = Bill.objects.filter(
-            issued_by__enterprise=user_enterprise,
             date_issued__range=[start_date, end_date]
         )
         
@@ -69,7 +66,6 @@ def analytics_overview(request):
         # Growth rate calculation (compare with previous period)
         prev_start_date = start_date - timedelta(days=days)
         prev_bills_count = Bill.objects.filter(
-            issued_by__enterprise=user_enterprise,
             date_issued__range=[prev_start_date, start_date]
         ).count()
         
@@ -155,11 +151,9 @@ def analytics_barcodes(request):
         end_date = timezone.now()
         start_date = end_date - timedelta(days=days)
         
-        user_enterprise = request.user.person.enterprise
         
         # Barcode statistics
         barcodes_queryset = Barcode.objects.filter(
-            assigned_to__enterprise=user_enterprise
         )
         
         total_barcodes = barcodes_queryset.count()
