@@ -7,5 +7,6 @@ urlpatterns = [
     path('branch/<int:id>/',views.BranchView.as_view(),name='branch'),
     path('getbranch/',views.UserBranchView.as_view(),name='branch'),
     path('role/',views.RoleView.as_view(),name='user_role'),
+    path('profile/',views.UserProfileView.as_view(),name='user_profile'),
    
 ]

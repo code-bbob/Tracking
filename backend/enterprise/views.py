@@ -96,3 +96,23 @@ class RoleView(APIView):
         user = request.user
         role = user.person.role
         return Response(role)
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        try:
+            person = user.person
+            data = {
+                'user_id': user.id,
+                'name': user.name,
+                'email': user.email,
+                'role': person.role,
+                'enterprise': person.enterprise.name if person.enterprise else None,
+                'branch': person.branch.name if person.branch else None,
+                'location': person.location.name if person.location else None,
+            }
+            return Response(data, status=200)
+        except Exception as e:
+            return Response({'error': 'Unable to fetch user profile'}, status=400)

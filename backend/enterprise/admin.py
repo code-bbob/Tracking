@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Enterprise,Person, Branch
+from .models import Enterprise,Person, Branch, Location
 # Register your models here.
 
 # class PersonInline(admin.TabularInline):
@@ -20,3 +20,4 @@ from .models import Enterprise,Person, Branch
 admin.site.register(Enterprise)
 admin.site.register(Person)
 admin.site.register(Branch)
+admin.site.register(Location)
