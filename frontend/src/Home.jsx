@@ -36,12 +36,14 @@ export default function Home() {
   const [completedPage, setCompletedPage] = useState(1)
   const [completedTotalPages, setCompletedTotalPages] = useState(1)
   const [completedTotalCount, setCompletedTotalCount] = useState(0)
+  const [completedPageSize, setCompletedPageSize] = useState(20)
   
   // Cancelled bills (paginated)
   const [cancelledShipments, setCancelledShipments] = useState([])
   const [cancelledPage, setCancelledPage] = useState(1)
   const [cancelledTotalPages, setCancelledTotalPages] = useState(1)
   const [cancelledTotalCount, setCancelledTotalCount] = useState(0)
+  const [cancelledPageSize, setCancelledPageSize] = useState(20)
   
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingCompleted, setIsLoadingCompleted] = useState(false)
@@ -54,17 +56,6 @@ export default function Home() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
-  // mappings...
-  const materialTypeMap = { roda: { en: "Roda", np: "रोडा" } }
-  const regionMap = { local: { en: "Local", np: "स्थानीय" } }
-  const vehicleSizeMap = { "260 cubic feet": { en: "260 cubic feet", np: "२६० घन फिट" } }
-
-  const handleLogout = () => {
-    localStorage.removeItem("accessToken")
-    localStorage.removeItem("refreshToken")
-    dispatch(logout())
-    navigate("/login")
-  }
 
   const fetchUserRole = async () => {
     try {
@@ -129,7 +120,11 @@ export default function Home() {
       setCompletedShipments(converted)
       setCompletedPage(page)
       setCompletedTotalCount(res.data.count)
-      setCompletedTotalPages(Math.ceil(res.data.count / 20))
+      
+      // Get page size from backend response or calculate from results
+      const pageSize = res.data.page_size || res.data.results.length || 20
+      setCompletedPageSize(pageSize)
+      setCompletedTotalPages(Math.ceil(res.data.count / pageSize))
     } catch (error) {
       console.error("Error fetching completed bills:", error)
       setCompletedShipments([])
@@ -162,7 +157,11 @@ export default function Home() {
       setCancelledShipments(converted)
       setCancelledPage(page)
       setCancelledTotalCount(res.data.count)
-      setCancelledTotalPages(Math.ceil(res.data.count / 20))
+      
+      // Get page size from backend response or calculate from results
+      const pageSize = res.data.page_size || res.data.results.length || 20
+      setCancelledPageSize(pageSize)
+      setCancelledTotalPages(Math.ceil(res.data.count / pageSize))
     } catch (error) {
       console.error("Error fetching cancelled bills:", error)
       setCancelledShipments([])
@@ -375,7 +374,9 @@ export default function Home() {
 
       <div className="max-w-7xl mx-auto p-2 sm:p-4">
         {isLoading ? (
-          <div className="flex justify-center py-12"><div className="animate-spin h-5 w-5 border-b-2 border-gray-900"></div></div>
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
+          </div>
         ) : (
           <div className="space-y-4">
             {/* Desktop Layout - 2 columns for Active and Completed, then Cancelled below */}
@@ -417,7 +418,7 @@ export default function Home() {
                         <div className="space-y-2 pr-2">
                           {isLoadingCompleted ? (
                             <div className="flex justify-center py-8">
-                              <div className="animate-spin h-5 w-5 border-b-2 border-gray-900"></div>
+                              <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
                             </div>
                           ) : completedShipments.length === 0 ? (
                             <p className="text-center text-gray-500 py-8">No completed shipments</p>
@@ -433,7 +434,7 @@ export default function Home() {
                         totalPages={completedTotalPages}
                         onPageChange={fetchCompletedShipments}
                         totalCount={completedTotalCount}
-                        pageSize={20}
+                        pageSize={completedPageSize}
                         isLoading={isLoadingCompleted}
                       />
                     </div>
@@ -455,7 +456,7 @@ export default function Home() {
                       <div className="space-y-2 pr-2">
                         {isLoadingCancelled ? (
                           <div className="flex justify-center py-8">
-                            <div className="animate-spin h-5 w-5 border-b-2 border-gray-900"></div>
+                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
                           </div>
                         ) : cancelledShipments.length === 0 ? (
                           <p className="text-center text-gray-500 py-8">No cancelled shipments</p>
@@ -471,7 +472,7 @@ export default function Home() {
                       totalPages={cancelledTotalPages}
                       onPageChange={fetchCancelledShipments}
                       totalCount={cancelledTotalCount}
-                      pageSize={20}
+                      pageSize={cancelledPageSize}
                       isLoading={isLoadingCancelled}
                     />
                   </div>
@@ -515,7 +516,7 @@ export default function Home() {
                     <div className="flex-1 overflow-y-auto p-3">
                       {isLoadingCompleted ? (
                         <div className="flex justify-center py-8">
-                          <div className="animate-spin h-5 w-5 border-b-2 border-gray-900"></div>
+                          <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
                         </div>
                       ) : completedShipments.length === 0 ? (
                         <p className="text-center text-gray-500 py-8 text-sm">No completed shipments</p>
@@ -532,7 +533,7 @@ export default function Home() {
                       totalPages={completedTotalPages}
                       onPageChange={fetchCompletedShipments}
                       totalCount={completedTotalCount}
-                      pageSize={20}
+                      pageSize={completedPageSize}
                       isLoading={isLoadingCompleted}
                     />
                   </div>
@@ -552,7 +553,7 @@ export default function Home() {
                     <div className="flex-1 overflow-y-auto p-3">
                       {isLoadingCancelled ? (
                         <div className="flex justify-center py-8">
-                          <div className="animate-spin h-5 w-5 border-b-2 border-gray-900"></div>
+                          <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
                         </div>
                       ) : cancelledShipments.length === 0 ? (
                         <p className="text-center text-gray-500 py-8 text-sm">No cancelled shipments</p>
@@ -569,7 +570,7 @@ export default function Home() {
                       totalPages={cancelledTotalPages}
                       onPageChange={fetchCancelledShipments}
                       totalCount={cancelledTotalCount}
-                      pageSize={20}
+                      pageSize={cancelledPageSize}
                       isLoading={isLoadingCancelled}
                     />
                   </div>

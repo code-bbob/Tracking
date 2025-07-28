@@ -626,7 +626,7 @@ export default function Records() {
         <div className="bg-white rounded-lg border overflow-hidden">
           {isLoading ? (
             <div className="flex justify-center py-12">
-              <div className="animate-spin h-8 w-8 border-b-2 border-gray-900"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
             </div>
           ) : bills.length === 0 ? (
             <div className="text-center py-12">
