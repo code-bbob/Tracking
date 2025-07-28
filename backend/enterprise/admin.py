@@ -17,7 +17,7 @@ from .models import Enterprise,Person, Branch, Location
 # admin.site.register(Enterprise,EnterpriseAdmin)
 # admin.site.register(Person)
 
-admin.site.register(Enterprise)
+# admin.site.register(Enterprise)
 admin.site.register(Person)
-admin.site.register(Branch)
+# admin.site.register(Branch)
 admin.site.register(Location)

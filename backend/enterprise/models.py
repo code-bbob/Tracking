@@ -22,8 +22,8 @@ class Enterprise(models.Model):
 
 class Person(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,primary_key=True)
-    enterprise = models.ForeignKey(Enterprise, on_delete=models.CASCADE)
-    branch = models.ForeignKey('Branch', on_delete=models.CASCADE, null=True, blank=True)
+    # enterprise = models.ForeignKey(Enterprise, on_delete=models.CASCADE)
+    # branch = models.ForeignKey('Branch', on_delete=models.CASCADE, null=True, blank=True)
     location = models.ForeignKey('Location', on_delete=models.CASCADE, null=True, blank=True)
 
     ROLE_CHOICES = [
@@ -33,7 +33,7 @@ class Person(models.Model):
     ]
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
     def __str__(self):
-        return f"{self.user.name} - {self.role} at {self.enterprise.name}"
+        return f"{self.user.name} - {self.role} "
     
 
 

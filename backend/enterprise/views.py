@@ -109,8 +109,6 @@ class UserProfileView(APIView):
                 'name': user.name,
                 'email': user.email,
                 'role': person.role,
-                'enterprise': person.enterprise.name if person.enterprise else None,
-                'branch': person.branch.name if person.branch else None,
                 'location': person.location.name if person.location else None,
             }
             return Response(data, status=200)

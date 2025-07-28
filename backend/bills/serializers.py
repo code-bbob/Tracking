@@ -16,6 +16,8 @@ class BillSerializer(serializers.ModelSerializer):
         print("haha",code)
         if code:
             barcode = Barcode.objects.filter(code=code).first()
+            if not barcode:
+                raise serializers.ValidationError("Barcode with this code does not exist.")
             if barcode.assigned_to != issued_by:
                 raise serializers.ValidationError("This barcode was not issued to you")
 
