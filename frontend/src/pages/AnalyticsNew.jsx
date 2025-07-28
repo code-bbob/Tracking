@@ -247,25 +247,25 @@ const Analytics = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Add Navbar */}
+    <div className="min-h-screen bg-gray-50">
       <Navbar 
         title="Analytics Dashboard" 
-        subtitle="Monitor your business performance"
+        subtitle="Monitor performance and track business metrics"
+        showBackButton={true}
       />
       
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="max-w-7xl mx-auto p-4 space-y-6">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 shadow-sm rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Tabs value={selectedView} onValueChange={setSelectedView}>
-                <TabsList className="grid grid-cols-2 bg-white rounded-xl p-1.5 shadow-sm border">
-                  <TabsTrigger value="overview" className="flex items-center gap-2 rounded-lg">
+                <TabsList className="grid grid-cols-2 bg-white rounded-lg p-1 shadow-sm border">
+                  <TabsTrigger value="overview" className="flex items-center gap-2 rounded-md">
                     <Eye className="h-4 w-4" />
                     Overview
                   </TabsTrigger>
-                  <TabsTrigger value="insights" className="flex items-center gap-2 rounded-lg">
+                  <TabsTrigger value="insights" className="flex items-center gap-2 rounded-md">
                     <BarChart3 className="h-4 w-4" />
                     Insights
                   </TabsTrigger>
@@ -274,7 +274,7 @@ const Analytics = () => {
             </div>
             <div className="flex items-center space-x-3">
               <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger className="w-44">
+                <SelectTrigger className="w-40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -284,21 +284,12 @@ const Analytics = () => {
                   <SelectItem value="365">Last year</SelectItem>
                 </SelectContent>
               </Select>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={exportData}
-                className="flex items-center gap-2 bg-transparent"
-              >
-                <Download className="h-4 w-4" />
-                Export
-              </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-6">
         <Tabs value={selectedView} onValueChange={setSelectedView} className="space-y-8">
 
           {/* Overview Tab */}
@@ -315,7 +306,7 @@ const Analytics = () => {
               />
               <MetricCard
                 title="Total Revenue"
-                value={`₹${analyticsData.summary.total_revenue.toLocaleString()}`}
+                value={`Rs.${analyticsData.summary.total_revenue.toLocaleString()}`}
                 subtitle="Total earnings"
                 icon={DollarSign}
                 variant="success"
@@ -400,7 +391,7 @@ const Analytics = () => {
                               borderRadius: "12px",
                               boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
                             }}
-                            formatter={(value) => [`₹${value.toLocaleString()}`, "Revenue"]}
+                            formatter={(value) => [`Rs.${value.toLocaleString()}`, "Revenue"]}
                           />
                           <Line
                             dataKey="revenue"

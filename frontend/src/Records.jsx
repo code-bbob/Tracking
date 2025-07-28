@@ -213,16 +213,16 @@ export default function Records() {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      pending: { color: 'bg-blue-100 text-blue-800', icon: Clock },
-      completed: { color: 'bg-green-100 text-green-800', icon: CheckCircle },
-      cancelled: { color: 'bg-red-100 text-red-800', icon: XCircle },
+      pending: { color: 'bg-yellow-50 text-yellow-800 border-yellow-200', icon: Clock },
+      completed: { color: 'bg-green-50 text-green-800 border-green-200', icon: CheckCircle },
+      cancelled: { color: 'bg-red-50 text-red-800 border-red-200', icon: XCircle },
     }
     
     const config = statusConfig[status] || statusConfig.pending
     const Icon = config.icon
     
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
+      <span className={`inline-flex items-center gap-1 px-2 py-1 border text-xs font-medium ${config.color}`}>
         <Icon className="h-3 w-3" />
         {status}
       </span>
@@ -385,79 +385,139 @@ export default function Records() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
+      <Navbar 
+        title="Bill Records"
+        subtitle="View and analyze all shipment records"
+        showBackButton={true}
+        customActions={[
+          {
+            label: "Export CSV",
+            icon: <Download className="h-4 w-4" />,
+            onClick: exportToCSV,
+            disabled: bills.length === 0,
+            className: "bg-gray-900 hover:bg-gray-800 text-white"
+          },
+          {
+            label: "Export PDF", 
+            icon: <Printer className="h-4 w-4" />,
+            onClick: exportToPDF,
+            disabled: bills.length === 0,
+            className: "bg-gray-700 hover:bg-gray-600 text-white"
+          }
+        ]}
+      />
 
-      <div className="p-4 max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Bill Records</h1>
-            <p className="text-gray-600">
-              Showing {bills.length} bills (Total: {pagination.count})
-            </p>
-          </div>
-          
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2"
-            >
-              <Filter className="h-4 w-4" />
-              {showFilters ? 'Close' : 'Filters'}
-            </Button>
-            <Button
-              onClick={exportToCSV}
-              className="flex items-center gap-2"
-              disabled={bills.length === 0}
-            >
-              <Download className="h-4 w-4" />
-              Export CSV
-            </Button>
-            <Button
-              onClick={exportToPDF}
-              className="flex items-center gap-2"
-              disabled={bills.length === 0}
-            >
-              <Printer className="h-4 w-4" />
-              Export PDF
-            </Button>
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        {/* Enhanced Header Section */}
+        <div className="bg-white border border-gray-200 shadow-sm">
+          <div className="p-6">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-semibold text-gray-900">Records Management</h1>
+                    <p className="text-sm text-gray-500">Track and manage all bill records</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-6 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+                    <span className="text-gray-600">
+                      Showing <span className="font-medium text-gray-900">{bills.length}</span> of{" "}
+                      <span className="font-medium text-gray-900">{pagination.count}</span> records
+                    </span>
+                  </div>
+                  
+                  {bills.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                      <span className="text-gray-600">
+                        Total Value: <span className="font-semibold text-green-700">Rs.{calculateTotals().grandTotal.toLocaleString()}</span>
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`flex items-center gap-2 px-4 py-2 border transition-colors ${
+                    showFilters 
+                      ? "border-blue-300 bg-blue-50 text-blue-700" 
+                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  <Filter className="h-4 w-4" />
+                  Filters
+                  {showFilters && <X className="h-3 w-3 ml-1" />}
+                </Button>
+                
+                <div className="h-8 w-px bg-gray-200"></div>
+                
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Clock className="h-4 w-4" />
+                  <span>Last updated: {new Date().toLocaleTimeString()}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Filters Panel */}
+        {/* Enhanced Filters Panel */}
         {showFilters && (
-          <div className="bg-white rounded-lg border p-4 mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold">Filters</h3>
+          <div className="bg-white border border-gray-200 shadow-sm">
+            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-gray-600" />
+                  <h3 className="text-lg font-medium text-gray-900">Filter Records</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Clear all filters</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={clearFilters}
+                    className="text-gray-500 hover:text-gray-700 text-sm px-2 py-1 h-auto"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
             </div>
             
-            <form onSubmit={(e) => { e.preventDefault(); applyFilters(); }}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <form onSubmit={(e) => { e.preventDefault(); applyFilters(); }} className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Search */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Search Records</label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <input
                       type="text"
                       value={filters.search}
                       onChange={(e) => handleFilterChange('search', e.target.value)}
-                      placeholder="Search bills..."
-                      className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Search bills, vehicles, drivers..."
+                      className="pl-10 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white hover:border-gray-400"
                     />
                   </div>
                 </div>
 
                 {/* Status */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Status</label>
                   <select
                     value={filters.status}
                     onChange={(e) => handleFilterChange('status', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white hover:border-gray-400"
                   >
-                    <option value="">All Statuses</option>
+                    <option value="">All</option>
                     <option value="pending">Pending</option>
                     <option value="completed">Completed</option>
                     <option value="cancelled">Cancelled</option>
@@ -465,12 +525,12 @@ export default function Records() {
                 </div>
 
                 {/* Material */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Material</label>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Material Type</label>
                   <select
                     value={filters.material}
                     onChange={(e) => handleFilterChange('material', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white hover:border-gray-400"
                   >
                     <option value="">All Materials</option>
                     {materialChoices.map(choice => (
@@ -480,26 +540,26 @@ export default function Records() {
                 </div>
 
                 {/* Region */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Region</label>
                   <select
                     value={filters.region}
                     onChange={(e) => handleFilterChange('region', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white hover:border-gray-400"
                   >
                     <option value="">All Regions</option>
                     <option value="local">Local</option>
-                    <option value="crossborder">Crossborder</option>
+                    <option value="crossborder">Cross Border</option>
                   </select>
                 </div>
 
                 {/* Vehicle Size */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Size</label>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Vehicle Size</label>
                   <select
                     value={filters.vehicleSize}
                     onChange={(e) => handleFilterChange('vehicleSize', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white hover:border-gray-400"
                   >
                     <option value="">All Sizes</option>
                     {vehicleSizeChoices.map(choice => (
@@ -508,169 +568,271 @@ export default function Records() {
                   </select>
                 </div>
 
-                {/* Issued By */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Issued By</label>
-                  <input
-                    type="text"
-                    value={filters.issuedBy}
-                    onChange={(e) => handleFilterChange('issuedBy', e.target.value)}
-                    placeholder="User name..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                {/* Date Issued From */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date Issued From</label>
+                {/* Date From */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Issue Date From</label>
                   <input
                     type="date"
                     value={filters.dateIssuedFrom}
                     onChange={(e) => handleFilterChange('dateIssuedFrom', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-400"
                   />
                 </div>
 
-                {/* Date Issued To */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date Issued To</label>
+                {/* Date To */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Issue Date To</label>
                   <input
                     type="date"
                     value={filters.dateIssuedTo}
                     onChange={(e) => handleFilterChange('dateIssuedTo', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-400"
                   />
                 </div>
 
-                {/* Amount From */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Amount From</label>
+                {/* Issued By */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Issued By</label>
+                  <input
+                    type="text"
+                    value={filters.issuedBy}
+                    onChange={(e) => handleFilterChange('issuedBy', e.target.value)}
+                    placeholder="Enter issuer name..."
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white hover:border-gray-400"
+                  />
+                </div>
+
+                {/* Min Amount */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Min Amount (Rs.)</label>
                   <input
                     type="number"
                     value={filters.amountFrom}
                     onChange={(e) => handleFilterChange('amountFrom', e.target.value)}
-                    placeholder="Min amount"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="0"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-400"
                   />
                 </div>
 
-                {/* Amount To */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Amount To</label>
+                {/* Max Amount */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Max Amount (Rs.)</label>
                   <input
                     type="number"
                     value={filters.amountTo}
                     onChange={(e) => handleFilterChange('amountTo', e.target.value)}
-                    placeholder="Max amount"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="999999"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-400"
                   />
                 </div>
 
-                {/* Checked By (Modified By) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Checked By</label>
+                {/* Checked By */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Verified By</label>
                   <input
                     type="text"
                     value={filters.modifiedBy}
                     onChange={(e) => handleFilterChange('modifiedBy', e.target.value)}
-                    placeholder="User name..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter verifier name..."
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white hover:border-gray-400"
                   />
                 </div>
 
-                {/* Checked Date From (Modified Date From) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Checked Date From</label>
+                {/* Checked Date From */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Verified Date From</label>
                   <input
                     type="date"
                     value={filters.dateModifiedFrom}
                     onChange={(e) => handleFilterChange('dateModifiedFrom', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-400"
                   />
                 </div>
 
-                {/* Checked Date To (Modified Date To) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Checked Date To</label>
+                {/* Checked Date To */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Verified Date To</label>
                   <input
                     type="date"
                     value={filters.dateModifiedTo}
                     onChange={(e) => handleFilterChange('dateModifiedTo', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-400"
                   />
                 </div>
               </div>
 
-              {/* Filter Action Buttons */}
-              <div className="flex gap-3 mt-4 pt-4 border-t">
-                <Button 
-                  type="submit"
-                  className="flex items-center gap-2"
-                >
-                  <Search className="h-4 w-4" />
-                  Apply Filters
-                </Button>
-                <Button 
-                  type="button"
-                  variant="outline"
-                  onClick={clearFilters}
-                >
-                  Clear All
-                </Button>
+              {/* Enhanced Action Buttons */}
+              <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200 bg-gray-50 -mx-6 px-6 py-4">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+                  <span>Use filters to narrow down your search results</span>
+                </div>
+                
+                <div className="flex gap-3">
+                  <Button 
+                    type="button"
+                    variant="outline"
+                    onClick={clearFilters}
+                    className="border-gray-300 text-gray-700 hover:bg-white hover:border-gray-400 px-6 py-2.5 text-sm font-medium transition-all"
+                  >
+                    Reset Filters
+                  </Button>
+                  <Button 
+                    type="submit"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 text-sm font-medium shadow-sm transition-all hover:shadow-md"
+                  >
+                    Apply Filters
+                  </Button>
+                </div>
               </div>
             </form>
           </div>
         )}
 
-        {/* Bills Table */}
-        <div className="bg-white rounded-lg border overflow-hidden">
+        {/* Enhanced Data Table */}
+        <div className="bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden">
           {isLoading ? (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
+            <div className="flex flex-col items-center justify-center py-24">
+              <div className="relative mb-6">
+                <div className="animate-spin rounded-full h-12 w-12 border-3 border-blue-200 border-t-blue-600"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="h-3 w-3 bg-blue-600 rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Loading Records</h3>
+              <p className="text-gray-500">Fetching your data, please wait...</p>
             </div>
           ) : bills.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-500">No bills found matching your criteria</p>
+            <div className="text-center py-24">
+              <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <FileText className="h-10 w-10 text-blue-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">No Records Found</h3>
+              <p className="text-gray-500 max-w-md mx-auto mb-6">
+                No bills match your current search criteria. Try adjusting your filters or search terms.
+              </p>
+              <Button 
+                onClick={clearFilters}
+                variant="outline"
+                className="px-6 py-2.5 border-blue-300 text-blue-600 hover:bg-blue-50"
+              >
+                Clear All Filters
+              </Button>
             </div>
           ) : (
             <div className="overflow-x-auto" id="bills-table-container">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bill #</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Route</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Material</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Issued</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Checked By</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+                        Bill Details
+                      </div>
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <Truck className="h-3 w-3 text-gray-500" />
+                        Vehicle Info
+                      </div>
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-3 w-3 text-gray-500" />
+                        Route
+                      </div>
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <Package className="h-3 w-3 text-gray-500" />
+                        Material
+                      </div>
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-3 w-3 text-gray-500" />
+                        Date Issued
+                      </div>
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-3 w-3 text-gray-500" />
+                        Issued by
+                      </div>
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {bills.map((bill) => (
+                <tbody className="bg-white divide-y divide-gray-100">
+                  {bills.map((bill, index) => (
                     <tr 
                       key={bill.id} 
-                      className="hover:bg-gray-50 cursor-pointer"
+                      className={`cursor-pointer transition-all duration-200 hover:bg-blue-50 hover:shadow-sm ${
+                        index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
+                      }`}
                       onClick={() => setSelectedBill(bill)}
                     >
-                      <td className="px-4 py-2 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">#{bill.code}</div>
-                        <div className="text-xs text-gray-500">{bill.issued_by_name || 'System'}</div>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-3">
+                          {/* <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg text-white flex items-center justify-center text-sm font-semibold shadow-sm">
+                            {bill.code?.slice(-2) || '##'}
+                          </div> */}
+                          <div>
+                            <div className="text-sm font-semibold text-gray-900">#{bill.code}</div>
+                            <div className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full inline-block">
+                              {bill.issued_by_name || 'System'}
+                            </div>
+                          </div>
+                        </div>
                       </td>
-                      <td className="px-4 py-2 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{bill.vehicle_number}</div>
-                        <div className="text-xs text-gray-500">{bill.vehicle_size} cubic feet</div>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
+                            <Truck className="h-4 w-4 text-green-600" />
+                          </div>
+                          <div>
+                            <div className="text-sm font-semibold text-gray-900">{bill.vehicle_number}</div>
+                            <div className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full inline-block">
+                              {bill.vehicle_size} cu ft
+                            </div>
+                          </div>
+                        </div>
                       </td>
-                      <td className="px-4 py-2 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{bill.issue_location}</div>
-                        <div className="text-xs text-gray-500">to {bill.destination}</div>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                            <MapPin className="h-4 w-4 text-blue-600" />
+                          </div>
+                          <div className="min-w-0 max-w-[200px]">
+                            <div className="text-sm font-medium text-gray-900 truncate">{bill.issue_location}</div>
+                            <div className="text-xs text-gray-500 truncate flex items-center gap-1">
+                              <span className="text-gray-400">→</span>
+                              {bill.destination}
+                            </div>
+                          </div>
+                        </div>
                       </td>
-                      <td className="px-4 py-2 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 capitalize">{bill.material}</div>
-                        <div className="text-xs text-gray-500 capitalize">{bill.region}</div>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center">
+                            <Package className="h-4 w-4 text-orange-600" />
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900 capitalize">{bill.material}</div>
+                            <div className="text-xs text-gray-500 capitalize">
+                              <span className={`px-2 py-0.5 rounded-full text-xs ${
+                                bill.region === 'local' 
+                                  ? 'bg-green-100 text-green-700' 
+                                  : 'bg-blue-100 text-blue-700'
+                              }`}>
+                                {bill.region}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       </td>
-                      <td className="px-4 py-2 whitespace-nowrap">
+                      <td className="px-6 py-4">
                         <div className={`text-sm font-medium ${
                           bill.status === 'pending' 
                             ? 'text-blue-600' 
@@ -678,21 +840,26 @@ export default function Records() {
                             ? 'text-red-500 line-through'
                             : 'text-green-600'
                         }`}>
-                          Rs. {bill.amount?.toLocaleString()}
+                          Rs.{bill.amount?.toLocaleString()}
                         </div>
                       </td>
-                      <td className="px-4 py-2 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{formatDateTime(bill.date_issued)}</div>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-gray-400" />
+                          <div className="text-sm text-gray-900">{formatDateTime(bill.date_issued)}</div>
+                        </div>
                       </td>
-                      <td className="px-4 py-2 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{bill.modified_by_name || '-'}</div>
-                        {bill.modified_date && (
-                          <div className="text-xs text-gray-500">
-                            {formatDateTime(bill.modified_date)}
-                          </div>
-                        )}
+                      <td className="px-6 py-4">
+                        <div>
+                          <div className="text-sm text-gray-900">{bill.issued_by_name || '-'}</div>
+                          {bill.modified_date && (
+                            <div className="text-xs text-gray-500">
+                              {formatDateTime(bill.modified_date)}
+                            </div>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-4 py-2 whitespace-nowrap">
+                      <td className="px-6 py-4">
                         {getStatusBadge(bill.status)}
                       </td>
                     </tr>
@@ -703,85 +870,79 @@ export default function Records() {
           )}
         </div>
 
-        {/* Professional Financial Summary */}
+        {/* Financial Summary */}
         {bills.length > 0 && (
-          <div className="bg-white rounded-lg border shadow-sm mt-6">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-lg">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <FileText className="h-5 w-5" />
+          <div className="bg-white border border-gray-200">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
+                <FileText className="h-5 w-5 text-gray-500" />
                 Financial Summary
               </h3>
-              <p className="text-blue-100 text-sm mt-1">
-                Revenue breakdown by status
-              </p>
+              <p className="text-sm text-gray-500 mt-1">Overview of financial metrics for displayed records</p>
             </div>
-            
             <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm text-blue-700 font-medium">Pending Amount</div>
-                    <Clock className="h-4 w-4 text-blue-600" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-4 border border-gray-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Pending Amount</div>
+                    <Clock className="h-4 w-4 text-gray-400" />
                   </div>
-                  <div className="text-2xl font-bold text-blue-800">
-                    Rs. {totals.pendingTotal.toLocaleString()}
+                  <div className="text-2xl font-semibold text-gray-900 mb-1">
+                    Rs.{calculateTotals().pendingTotal.toLocaleString()}
                   </div>
-                  <div className="text-xs text-blue-600 mt-1">
-                    {bills.filter(b => b.status === 'pending').length} bills awaiting completion
-                  </div>
-                </div>
-                
-                <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm text-green-700 font-medium">Completed Amount</div>
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  </div>
-                  <div className="text-2xl font-bold text-green-800">
-                    Rs. {totals.completedTotal.toLocaleString()}
-                  </div>
-                  <div className="text-xs text-green-600 mt-1">
-                    {bills.filter(b => b.status === 'completed').length} bills completed
+                  <div className="text-xs text-gray-500">
+                    {bills.filter(b => b.status === 'pending').length} bills
                   </div>
                 </div>
                 
-                <div className="bg-gradient-to-br from-red-50 to-red-100 p-4 rounded-lg border border-red-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm text-red-700 font-medium">Cancelled Amount</div>
-                    <XCircle className="h-4 w-4 text-red-600" />
+                <div className="p-4 border border-gray-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Completed Amount</div>
+                    <CheckCircle className="h-4 w-4 text-gray-400" />
                   </div>
-                  <div className="text-2xl font-bold text-red-800 line-through">
-                    Rs. {totals.cancelledTotal.toLocaleString()}
+                  <div className="text-2xl font-semibold text-gray-900 mb-1">
+                    Rs.{calculateTotals().completedTotal.toLocaleString()}
                   </div>
-                  <div className="text-xs text-red-600 mt-1">
-                    {bills.filter(b => b.status === 'cancelled').length} bills cancelled (excluded)
+                  <div className="text-xs text-gray-500">
+                    {bills.filter(b => b.status === 'completed').length} bills
                   </div>
                 </div>
                 
-                <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-lg border border-gray-700">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm text-gray-200 font-medium">Total Revenue</div>
+                <div className="p-4 border border-gray-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Cancelled Amount</div>
+                    <XCircle className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <div className="text-2xl font-semibold text-red-600 line-through mb-1">
+                    Rs.{calculateTotals().cancelledTotal.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {bills.filter(b => b.status === 'cancelled').length} bills
+                  </div>
+                </div>
+                
+                <div className="p-4 bg-gray-900 text-white">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-xs font-medium text-gray-300 uppercase tracking-wider">Total Revenue</div>
                     <Package className="h-4 w-4 text-gray-300" />
                   </div>
-                  <div className="text-2xl font-bold text-white">
-                    Rs. {totals.grandTotal.toLocaleString()}
+                  <div className="text-2xl font-semibold text-white mb-1">
+                    Rs.{calculateTotals().grandTotal.toLocaleString()}
                   </div>
-                  <div className="text-xs text-gray-300 mt-1">
-                    Combined pending + completed
+                  <div className="text-xs text-gray-300">
+                    Combined active revenue
                   </div>
                 </div>
               </div>
               
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg border-l-4 border-blue-500">
-                <div className="flex items-start gap-3">
-                  <div className="bg-blue-100 p-2 rounded-full">
-                    <FileText className="h-4 w-4 text-blue-600" />
-                  </div>
+              <div className="mt-6 p-4 bg-gray-50 border border-gray-200">
+                <div className="flex items-start gap-4">
+                  <FileText className="h-5 w-5 text-gray-400 mt-0.5" />
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-1">Revenue Calculation</h4>
-                    <p className="text-sm text-gray-600">
-                      Total revenue includes both pending and completed bills. 
-                      Pending amounts are counted as they represent committed transactions.
-                      Cancelled bills are excluded from all revenue calculations.
+                    <h4 className="text-sm font-medium text-gray-900 mb-2">Revenue Calculation Method</h4>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      Total revenue includes both pending and completed bills. Cancelled bills are excluded 
+                      from all revenue calculations to ensure accurate financial reporting.
                     </p>
                   </div>
                 </div>
@@ -792,24 +953,39 @@ export default function Records() {
 
         {/* Pagination */}
         {pagination.count > 50 && (
-          <div className="flex justify-between items-center mt-4">
-            <Button
-              variant="outline"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={!pagination.previous || isLoading}
-            >
-              Previous
-            </Button>
-            <span className="text-sm text-gray-600">
-              Page {currentPage}
-            </span>
-            <Button
-              variant="outline"
-              onClick={() => setCurrentPage(prev => prev + 1)}
-              disabled={!pagination.next || isLoading}
-            >
-              Next
-            </Button>
+          <div className="bg-white border border-gray-200 px-6 py-4">
+            <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
+              <div className="flex items-center gap-4">
+                <div className="text-sm text-gray-600">
+                  Page {currentPage} of {Math.ceil(pagination.count / 50)}
+                </div>
+                <div className="h-4 w-px bg-gray-300"></div>
+                <div className="text-sm text-gray-500">
+                  {pagination.count} total records
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={!pagination.previous || isLoading}
+                  className="px-4 py-2 border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  ← Previous
+                </Button>
+                <div className="px-3 py-2 bg-gray-900 text-white text-sm font-medium">
+                  {currentPage}
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  disabled={!pagination.next || isLoading}
+                  className="px-4 py-2 border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next →
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 
