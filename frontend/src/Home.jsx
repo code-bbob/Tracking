@@ -425,14 +425,16 @@ export default function Home() {
                           )}
                         </div>
                       </div>
-                      <Pagination
-                        currentPage={completedPage}
-                        totalPages={completedTotalPages}
-                        onPageChange={fetchCompletedShipments}
-                        totalCount={completedTotalCount}
-                        pageSize={completedPageSize}
-                        isLoading={isLoadingCompleted}
-                      />
+                      <div className="flex justify-center px-3 py-2">
+                        <Pagination
+                          currentPage={completedPage}
+                          totalPages={completedTotalPages}
+                          onPageChange={fetchCompletedShipments}
+                          totalCount={completedTotalCount}
+                          pageSize={completedPageSize}
+                          isLoading={isLoadingCompleted}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -463,14 +465,16 @@ export default function Home() {
                         )}
                       </div>
                     </div>
-                    <Pagination
-                      currentPage={cancelledPage}
-                      totalPages={cancelledTotalPages}
-                      onPageChange={fetchCancelledShipments}
-                      totalCount={cancelledTotalCount}
-                      pageSize={cancelledPageSize}
-                      isLoading={isLoadingCancelled}
-                    />
+                    <div className="flex justify-center px-3 py-2">
+                      <Pagination
+                        currentPage={cancelledPage}
+                        totalPages={cancelledTotalPages}
+                        onPageChange={fetchCancelledShipments}
+                        totalCount={cancelledTotalCount}
+                        pageSize={cancelledPageSize}
+                        isLoading={isLoadingCancelled}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -486,7 +490,7 @@ export default function Home() {
                   </h2>
                   <span className="text-xs sm:text-sm text-gray-500">{activeCount} bills</span>
                 </div>
-                <div className="p-3 max-h-80 overflow-y-auto">
+                <div className=" h-80 overflow-y-auto">
                   {activeShipments.length === 0 ? (
                     <p className="text-center text-gray-500 py-8 text-sm">No active shipments</p>
                   ) : (
@@ -507,7 +511,7 @@ export default function Home() {
                   </h2>
                   <span className="text-xs sm:text-sm text-gray-500">{completedTotalCount} bills</span>
                 </div>
-                <div className="max-h-80 overflow-hidden">
+                <div className=" h-80 overflow-hidden">
                   <div className="flex flex-col h-full">
                     <div className="flex-1 overflow-y-auto p-3">
                       {isLoadingCompleted ? (
@@ -524,14 +528,16 @@ export default function Home() {
                         </div>
                       )}
                     </div>
-                    <Pagination
-                      currentPage={completedPage}
-                      totalPages={completedTotalPages}
-                      onPageChange={fetchCompletedShipments}
-                      totalCount={completedTotalCount}
-                      pageSize={completedPageSize}
-                      isLoading={isLoadingCompleted}
-                    />
+                    <div className="flex justify-center px-3 py-2">
+                      <Pagination
+                        currentPage={completedPage}
+                        totalPages={completedTotalPages}
+                        onPageChange={fetchCompletedShipments}
+                        totalCount={completedTotalCount}
+                        pageSize={completedPageSize}
+                        isLoading={isLoadingCompleted}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -544,7 +550,7 @@ export default function Home() {
                   </h2>
                   <span className="text-xs sm:text-sm text-gray-500">{cancelledTotalCount} bills</span>
                 </div>
-                <div className="max-h-60 overflow-hidden">
+                <div className=" h-80 overflow-hidden">
                   <div className="flex flex-col h-full">
                     <div className="flex-1 overflow-y-auto p-3">
                       {isLoadingCancelled ? (
@@ -561,14 +567,16 @@ export default function Home() {
                         </div>
                       )}
                     </div>
-                    <Pagination
-                      currentPage={cancelledPage}
-                      totalPages={cancelledTotalPages}
-                      onPageChange={fetchCancelledShipments}
-                      totalCount={cancelledTotalCount}
-                      pageSize={cancelledPageSize}
-                      isLoading={isLoadingCancelled}
-                    />
+                    <div className="flex justify-center px-3 py-2">
+                      <Pagination
+                        currentPage={cancelledPage}
+                        totalPages={cancelledTotalPages}
+                        onPageChange={fetchCancelledShipments}
+                        totalCount={cancelledTotalCount}
+                        pageSize={cancelledPageSize}
+                        isLoading={isLoadingCancelled}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

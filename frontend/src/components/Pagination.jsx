@@ -15,12 +15,7 @@ export default function Pagination({
   if (totalPages <= 1) return null
 
   return (
-    <div className="flex items-center justify-between px-2 py-3 border-t bg-gray-50">
-      <div className="flex items-center text-sm text-gray-500">
-        <span>
-          Showing {startItem} to {endItem} of {totalCount.toLocaleString()} results
-        </span>
-      </div>
+    <div className="flex items-center justify-between px-2 py-3 ">
       
       <div className="flex items-center space-x-2">
         {/* Previous page */}
