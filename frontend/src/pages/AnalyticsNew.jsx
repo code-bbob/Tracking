@@ -254,27 +254,27 @@ const Analytics = () => {
         showBackButton={true}
       />
       
-      <div className="max-w-7xl mx-auto p-4 space-y-6">
+      <div className="container mx-auto px-4 py-6 max-w-none">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 shadow-sm rounded-lg p-4">
-          <div className="flex items-center justify-between">
+        <div className="bg-white border-b border-gray-200 shadow-sm rounded-lg p-4 mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center space-x-3">
               <Tabs value={selectedView} onValueChange={setSelectedView}>
                 <TabsList className="grid grid-cols-2 bg-white rounded-lg p-1 shadow-sm border">
-                  <TabsTrigger value="overview" className="flex items-center gap-2 rounded-md">
+                  <TabsTrigger value="overview" className="flex items-center gap-2 rounded-md text-sm px-2 py-1">
                     <Eye className="h-4 w-4" />
-                    Overview
+                    <span className="hidden sm:inline">Overview</span>
                   </TabsTrigger>
-                  <TabsTrigger value="insights" className="flex items-center gap-2 rounded-md">
+                  <TabsTrigger value="insights" className="flex items-center gap-2 rounded-md text-sm px-2 py-1">
                     <BarChart3 className="h-4 w-4" />
-                    Insights
+                    <span className="hidden sm:inline">Insights</span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
             <div className="flex items-center space-x-3">
               <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-32 sm:w-40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -287,15 +287,12 @@ const Analytics = () => {
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <Tabs value={selectedView} onValueChange={setSelectedView} className="space-y-8">
+        <Tabs value={selectedView} onValueChange={setSelectedView} className="space-y-6">
 
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-8">
+          <TabsContent value="overview" className="space-y-6">
             {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <MetricCard
                 title="Total Bills"
                 value={analyticsData.summary.total_bills.toLocaleString()}
@@ -321,7 +318,7 @@ const Analytics = () => {
             </div>
 
             {/* Charts Row */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Daily Trends Chart */}
               {analyticsData.daily_trends && analyticsData.daily_trends.length > 0 && (
                 <Card className="shadow-sm border-0 bg-white">
@@ -332,26 +329,28 @@ const Analytics = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-64 w-full">
+                    <div className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
                           data={analyticsData.daily_trends}
-                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                          margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
                         >
                           <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                           <XAxis
                             dataKey="date"
-                            fontSize={12}
+                            fontSize={11}
                             tick={{ fill: "#64748b" }}
                             axisLine={{ stroke: "#e2e8f0" }}
+                            interval="preserveStartEnd"
                           />
-                          <YAxis fontSize={12} tick={{ fill: "#64748b" }} axisLine={{ stroke: "#e2e8f0" }} />
+                          <YAxis fontSize={11} tick={{ fill: "#64748b" }} axisLine={{ stroke: "#e2e8f0" }} width={40} />
                           <Tooltip
                             contentStyle={{
                               backgroundColor: "white",
                               border: "1px solid #e2e8f0",
-                              borderRadius: "12px",
-                              boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                              borderRadius: "8px",
+                              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                              fontSize: "12px"
                             }}
                           />
                           <Bar dataKey="bills" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Bills" />
@@ -370,26 +369,28 @@ const Analytics = () => {
                     <CardDescription className="text-gray-500">Daily revenue over time</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-64 w-full">
+                    <div className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart
                           data={analyticsData.daily_trends}
-                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                          margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
                         >
                           <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                           <XAxis
                             dataKey="date"
-                            fontSize={12}
+                            fontSize={11}
                             tick={{ fill: "#64748b" }}
                             axisLine={{ stroke: "#e2e8f0" }}
+                            interval="preserveStartEnd"
                           />
-                          <YAxis fontSize={12} tick={{ fill: "#64748b" }} axisLine={{ stroke: "#e2e8f0" }} />
+                          <YAxis fontSize={11} tick={{ fill: "#64748b" }} axisLine={{ stroke: "#e2e8f0" }} width={60} />
                           <Tooltip
                             contentStyle={{
                               backgroundColor: "white",
                               border: "1px solid #e2e8f0",
-                              borderRadius: "12px",
-                              boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                              borderRadius: "8px",
+                              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                              fontSize: "12px"
                             }}
                             formatter={(value) => [`Rs.${value.toLocaleString()}`, "Revenue"]}
                           />
@@ -397,9 +398,9 @@ const Analytics = () => {
                             dataKey="revenue"
                             type="monotone"
                             stroke="#10b981"
-                            strokeWidth={3}
-                            dot={{ fill: "#10b981", r: 4 }}
-                            activeDot={{ r: 6, fill: "#10b981" }}
+                            strokeWidth={2}
+                            dot={{ fill: "#10b981", r: 3 }}
+                            activeDot={{ r: 5, fill: "#10b981" }}
                           />
                         </LineChart>
                       </ResponsiveContainer>
@@ -417,48 +418,48 @@ const Analytics = () => {
                   <CardDescription className="text-gray-500">Current distribution of bill statuses</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
                       <div className="flex items-center justify-between">
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-green-800 mb-1">Completed</p>
-                          <p className="text-3xl font-bold text-green-900">{analyticsData.summary.completed_bills}</p>
+                          <p className="text-2xl font-bold text-green-900 truncate">{analyticsData.summary.completed_bills}</p>
                         </div>
-                        <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
-                          <CheckCircle className="h-6 w-6 text-white" />
+                        <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center ml-3">
+                          <CheckCircle className="h-5 w-5 text-white" />
                         </div>
                       </div>
                     </div>
-                    <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-6 border border-amber-200">
+                    <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200">
                       <div className="flex items-center justify-between">
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-amber-800 mb-1">Pending</p>
-                          <p className="text-3xl font-bold text-camber-900">{analyticsData.summary.pending_bills}</p>
+                          <p className="text-2xl font-bold text-amber-900 truncate">{analyticsData.summary.pending_bills}</p>
                         </div>
-                        <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center">
-                          <Clock className="h-6 w-6 text-white" />
+                        <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center ml-3">
+                          <Clock className="h-5 w-5 text-white" />
                         </div>
                       </div>
                     </div>
-                    <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-6 border border-red-200">
+                    <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 border border-red-200">
                       <div className="flex items-center justify-between">
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-red-800 mb-1">Overdue</p>
-                          <p className="text-3xl font-bold text-red-900">{analyticsData.summary.overdue_bills}</p>
+                          <p className="text-2xl font-bold text-red-900 truncate">{analyticsData.summary.overdue_bills}</p>
                         </div>
-                        <div className="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center">
-                          <AlertTriangle className="h-6 w-6 text-white" />
+                        <div className="w-10 h-10 bg-red-500 rounded-xl flex items-center justify-center ml-3">
+                          <AlertTriangle className="h-5 w-5 text-white" />
                         </div>
                       </div>
                     </div>
-                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
                       <div className="flex items-center justify-between">
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-gray-800 mb-1">Cancelled</p>
-                          <p className="text-3xl font-bold text-gray-900">{analyticsData.summary.cancelled_bills}</p>
+                          <p className="text-2xl font-bold text-gray-900 truncate">{analyticsData.summary.cancelled_bills}</p>
                         </div>
-                        <div className="w-12 h-12 bg-gray-500 rounded-xl flex items-center justify-center">
-                          <XCircle className="h-6 w-6 text-white" />
+                        <div className="w-10 h-10 bg-gray-500 rounded-xl flex items-center justify-center ml-3">
+                          <XCircle className="h-5 w-5 text-white" />
                         </div>
                       </div>
                     </div>
@@ -469,8 +470,8 @@ const Analytics = () => {
           </TabsContent>
 
           {/* Insights Tab */}
-          <TabsContent value="insights" className="space-y-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+          <TabsContent value="insights" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {/* Material Distribution */}
               {analyticsData.material_distribution && analyticsData.material_distribution.length > 0 && (
                 <Card className="shadow-sm border-0 bg-white">
@@ -479,7 +480,7 @@ const Analytics = () => {
                     <CardDescription className="text-gray-500">Bills by material type</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-80 w-full">
+                    <div className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
@@ -488,8 +489,8 @@ const Analytics = () => {
                             nameKey="name"
                             cx="50%"
                             cy="50%"
-                            outerRadius={100}
-                            innerRadius={50}
+                            outerRadius={70}
+                            innerRadius={35}
                             paddingAngle={2}
                           >
                             {analyticsData.material_distribution.map((entry, index) => (
@@ -500,17 +501,18 @@ const Analytics = () => {
                             contentStyle={{
                               backgroundColor: "white",
                               border: "1px solid #e2e8f0",
-                              borderRadius: "12px",
-                              boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                              borderRadius: "8px",
+                              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                              fontSize: "12px"
                             }}
                             formatter={(value, name) => [`${value} bills`, name]}
                           />
                           <Legend
                             verticalAlign="bottom"
-                            height={36}
+                            height={30}
                             iconType="circle"
-                            fontSize={12}
-                            wrapperStyle={{ paddingTop: "20px" }}
+                            fontSize={10}
+                            wrapperStyle={{ paddingTop: "10px" }}
                           />
                         </PieChart>
                       </ResponsiveContainer>
@@ -527,7 +529,7 @@ const Analytics = () => {
                     <CardDescription className="text-gray-500">Local vs Cross Border</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-80 w-full">
+                    <div className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
@@ -536,8 +538,8 @@ const Analytics = () => {
                             nameKey="name"
                             cx="50%"
                             cy="50%"
-                            outerRadius={100}
-                            innerRadius={50}
+                            outerRadius={70}
+                            innerRadius={35}
                             paddingAngle={2}
                           >
                             {analyticsData.regional_distribution.map((entry, index) => (
@@ -548,17 +550,18 @@ const Analytics = () => {
                             contentStyle={{
                               backgroundColor: "white",
                               border: "1px solid #e2e8f0",
-                              borderRadius: "12px",
-                              boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                              borderRadius: "8px",
+                              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                              fontSize: "12px"
                             }}
                             formatter={(value, name) => [`${value} bills`, name]}
                           />
                           <Legend
                             verticalAlign="bottom"
-                            height={36}
+                            height={30}
                             iconType="circle"
-                            fontSize={12}
-                            wrapperStyle={{ paddingTop: "20px" }}
+                            fontSize={10}
+                            wrapperStyle={{ paddingTop: "10px" }}
                           />
                         </PieChart>
                       </ResponsiveContainer>
@@ -575,7 +578,7 @@ const Analytics = () => {
                     <CardDescription className="text-gray-500">Bills by vehicle size</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-80 w-full">
+                    <div className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
@@ -584,8 +587,8 @@ const Analytics = () => {
                             nameKey="name"
                             cx="50%"
                             cy="50%"
-                            outerRadius={100}
-                            innerRadius={50}
+                            outerRadius={70}
+                            innerRadius={35}
                             paddingAngle={2}
                           >
                             {analyticsData.vehicle_distribution.map((entry, index) => (
@@ -596,17 +599,18 @@ const Analytics = () => {
                             contentStyle={{
                               backgroundColor: "white",
                               border: "1px solid #e2e8f0",
-                              borderRadius: "12px",
-                              boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                              borderRadius: "8px",
+                              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                              fontSize: "12px"
                             }}
                             formatter={(value, name) => [`${value} bills`, name]}
                           />
                           <Legend
                             verticalAlign="bottom"
-                            height={36}
+                            height={30}
                             iconType="circle"
-                            fontSize={12}
-                            wrapperStyle={{ paddingTop: "20px" }}
+                            fontSize={10}
+                            wrapperStyle={{ paddingTop: "10px" }}
                           />
                         </PieChart>
                       </ResponsiveContainer>
@@ -617,13 +621,13 @@ const Analytics = () => {
 
               {/* Top Destinations */}
               {analyticsData.top_destinations && analyticsData.top_destinations.length > 0 && (
-                <Card className="shadow-sm border-0 bg-white">
+                <Card className="shadow-sm border-0 bg-white md:col-span-2 xl:col-span-1">
                   <CardHeader className="pb-4">
                     <CardTitle className="text-lg font-semibold text-gray-900">Top Destinations</CardTitle>
                     <CardDescription className="text-gray-500">Most frequent destinations</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-80 w-full">
+                    <div className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
@@ -632,8 +636,8 @@ const Analytics = () => {
                             nameKey="name"
                             cx="50%"
                             cy="50%"
-                            outerRadius={100}
-                            innerRadius={50}
+                            outerRadius={70}
+                            innerRadius={35}
                             paddingAngle={2}
                           >
                             {analyticsData.top_destinations.map((entry, index) => (
@@ -644,17 +648,18 @@ const Analytics = () => {
                             contentStyle={{
                               backgroundColor: "white",
                               border: "1px solid #e2e8f0",
-                              borderRadius: "12px",
-                              boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                              borderRadius: "8px",
+                              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                              fontSize: "12px"
                             }}
                             formatter={(value, name) => [`${value} bills`, name]}
                           />
                           <Legend
                             verticalAlign="bottom"
-                            height={36}
+                            height={30}
                             iconType="circle"
-                            fontSize={12}
-                            wrapperStyle={{ paddingTop: "20px" }}
+                            fontSize={10}
+                            wrapperStyle={{ paddingTop: "10px" }}
                           />
                         </PieChart>
                       </ResponsiveContainer>
@@ -665,13 +670,13 @@ const Analytics = () => {
 
               {/* Status Distribution Pie Chart */}
               {analyticsData.status_distribution && analyticsData.status_distribution.length > 0 && (
-                <Card className="shadow-sm border-0 bg-white">
+                <Card className="shadow-sm border-0 bg-white md:col-span-2">
                   <CardHeader className="pb-4">
                     <CardTitle className="text-lg font-semibold text-gray-900">Status Distribution</CardTitle>
                     <CardDescription className="text-gray-500">Bill status breakdown</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-80 w-full">
+                    <div className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
@@ -680,8 +685,8 @@ const Analytics = () => {
                             nameKey="name"
                             cx="50%"
                             cy="50%"
-                            outerRadius={100}
-                            innerRadius={50}
+                            outerRadius={70}
+                            innerRadius={35}
                             paddingAngle={2}
                           >
                             {analyticsData.status_distribution.map((entry, index) => (
@@ -692,17 +697,18 @@ const Analytics = () => {
                             contentStyle={{
                               backgroundColor: "white",
                               border: "1px solid #e2e8f0",
-                              borderRadius: "12px",
-                              boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+                              borderRadius: "8px",
+                              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                              fontSize: "12px"
                             }}
                             formatter={(value, name) => [`${value} bills`, name]}
                           />
                           <Legend
                             verticalAlign="bottom"
-                            height={36}
+                            height={30}
                             iconType="circle"
-                            fontSize={12}
-                            wrapperStyle={{ paddingTop: "20px" }}
+                            fontSize={10}
+                            wrapperStyle={{ paddingTop: "10px" }}
                           />
                         </PieChart>
                       </ResponsiveContainer>

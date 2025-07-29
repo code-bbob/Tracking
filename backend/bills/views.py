@@ -12,7 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 
 class CustomPagination(PageNumberPagination):
-    page_size = 1
+    page_size = 4
     page_size_query_param = 'page_size'
     max_page_size = 100
 
