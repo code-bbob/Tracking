@@ -95,6 +95,13 @@ const Analytics = () => {
           revenue: item.revenue || 0,
           color: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#6b7280"][index % 6],
         })) || [],
+      issue_locations:
+        apiData.issue_locations?.map((item, index) => ({
+          name: item.issue_location || "Unknown",
+          value: item.count || 0,
+          revenue: item.revenue || 0,
+          color: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#6b7280", "#fb7185", "#34d399"][index % 8],
+        })) || [],
       status_distribution: [
         { name: "Completed", value: apiData.summary?.completed_bills || 0, color: "#10b981" },
         { name: "Pending", value: apiData.summary?.pending_bills || 0, color: "#f59e0b" },
@@ -471,7 +478,7 @@ const Analytics = () => {
 
           {/* Insights Tab */}
           <TabsContent value="insights" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Material Distribution */}
               {analyticsData.material_distribution && analyticsData.material_distribution.length > 0 && (
                 <Card className="shadow-sm border-0 bg-white">
@@ -639,7 +646,7 @@ const Analytics = () => {
 
               {/* Top Destinations */}
               {analyticsData.top_destinations && analyticsData.top_destinations.length > 0 && (
-                <Card className="shadow-sm border-0 bg-white lg:col-span-2 2xl:col-span-1">
+                <Card className="shadow-sm border-0 bg-white">
                   <CardHeader className="pb-4">
                     <CardTitle className="text-lg font-semibold text-gray-900">Top Destinations</CardTitle>
                     <CardDescription className="text-gray-500">Most frequent destinations</CardDescription>
@@ -692,9 +699,64 @@ const Analytics = () => {
                 </Card>
               )}
 
+              {/* Issue Locations */}
+              {analyticsData.issue_locations && analyticsData.issue_locations.length > 0 && (
+                <Card className="shadow-sm border-0 bg-white">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-lg font-semibold text-gray-900">Issue Locations</CardTitle>
+                    <CardDescription className="text-gray-500">Bills by issue location</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-96 w-full overflow-hidden">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={analyticsData.issue_locations}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="40%"
+                            outerRadius={80}
+                            innerRadius={40}
+                            paddingAngle={2}
+                          >
+                            {analyticsData.issue_locations.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: "white",
+                              border: "1px solid #e2e8f0",
+                              borderRadius: "8px",
+                              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                              fontSize: "12px"
+                            }}
+                            formatter={(value, name) => [`${value} bills`, name]}
+                          />
+                          <Legend
+                            verticalAlign="bottom"
+                            height={80}
+                            iconType="circle"
+                            fontSize={10}
+                            wrapperStyle={{ 
+                              paddingTop: "10px",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis"
+                            }}
+                            layout="horizontal"
+                            align="center"
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Status Distribution Pie Chart */}
               {analyticsData.status_distribution && analyticsData.status_distribution.length > 0 && (
-                <Card className="shadow-sm border-0 bg-white lg:col-span-2">
+                <Card className="shadow-sm border-0 bg-white">
                   <CardHeader className="pb-4">
                     <CardTitle className="text-lg font-semibold text-gray-900">Status Distribution</CardTitle>
                     <CardDescription className="text-gray-500">Bill status breakdown</CardDescription>

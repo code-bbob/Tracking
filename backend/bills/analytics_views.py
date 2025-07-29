@@ -106,6 +106,12 @@ def analytics_overview(request):
             revenue=Sum('amount')
         ).order_by('-count')[:10]
         
+        # Issue locations distribution
+        issue_locations = bills_queryset.values('issue_location').annotate(
+            count=Count('id'),
+            revenue=Sum('amount')
+        ).order_by('-count')[:10]
+        
         response_data = {
             'summary': {
                 'total_bills': total_bills,
@@ -124,6 +130,7 @@ def analytics_overview(request):
             'regional_distribution': list(regional_distribution),
             'vehicle_distribution': list(vehicle_distribution),
             'top_destinations': list(top_destinations),
+            'issue_locations': list(issue_locations),
             'period': f'{days} days',
             'date_range': {
                 'start': start_date.isoformat(),
