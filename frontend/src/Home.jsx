@@ -363,6 +363,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar
+        title='Dashboard'
         showSearch
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -373,11 +374,6 @@ export default function Home() {
       />
 
       <div className="max-w-7xl mx-auto p-2 sm:p-4">
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
-          </div>
-        ) : (
           <div className="space-y-4">
             {/* Desktop Layout - 2 columns for Active and Completed, then Cancelled below */}
             <div className="hidden lg:block space-y-4">
@@ -443,7 +439,7 @@ export default function Home() {
               </div>
 
               {/* Bottom row: Cancelled full width */}
-              <div className="flex flex-col bg-white rounded-lg w-[calc(50vw-25px)] shadow-sm border overflow-hidden h-[calc(40vh-40px)]">
+              <div className="flex flex-col bg-white rounded-lg w-[calc(50vw-25px)] shadow-sm border overflow-hidden h-[calc(100vh-40px)]">
                 <div className="flex items-center justify-between p-3 border-b bg-red-100 rounded-t-lg">
                   <h2 className="flex items-center gap-2 font-semibold">
                     <XCircle className="h-5 w-5 text-red-600"/> Cancelled Shipments
@@ -578,7 +574,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-        )}
+        
       </div>
 
       {showScanner && <BarcodeScanner onScan={handleScan} onClose={()=>setShowScanner(false)} />}

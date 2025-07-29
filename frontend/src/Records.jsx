@@ -1,27 +1,43 @@
-import { useState, useEffect, useRef } from "react"
-import { Search, Filter, Download, X, MapPin, Package, Truck, Clock, CheckCircle, XCircle, FileText, Printer } from "lucide-react"
-import { Button } from "./components/ui/button"
-import Navbar from "./components/Navbar"
+import { useState, useEffect, useRef } from "react";
+import {
+  Search,
+  Filter,
+  Download,
+  X,
+  MapPin,
+  Package,
+  Truck,
+  Clock,
+  CheckCircle,
+  XCircle,
+  FileText,
+  Printer,
+} from "lucide-react";
+import { Button } from "./components/ui/button";
+import Navbar from "./components/Navbar";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "./components/ui/dialog"
-import useAxios from "./utils/useAxios"
-import jsPDF from 'jspdf'
-import 'jspdf-autotable'
-import html2canvas from 'html2canvas'
-
+} from "./components/ui/dialog";
+import useAxios from "./utils/useAxios";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import html2canvas from "html2canvas";
 
 export default function Records() {
-    const api = useAxios()
-  const [bills, setBills] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [selectedBill, setSelectedBill] = useState(null)
-  const [pagination, setPagination] = useState({ count: 0, next: null, previous: null })
-  const [currentPage, setCurrentPage] = useState(1)
-  
+  const api = useAxios();
+  const [bills, setBills] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedBill, setSelectedBill] = useState(null);
+  const [pagination, setPagination] = useState({
+    count: 0,
+    next: null,
+    previous: null,
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+
   // Filter states
   const [filters, setFilters] = useState({
     search: "",
@@ -37,8 +53,8 @@ export default function Records() {
     dateModifiedTo: "",
     amountFrom: "",
     amountTo: "",
-  })
-  
+  });
+
   const [appliedFilters, setAppliedFilters] = useState({
     search: "",
     status: "",
@@ -53,81 +69,81 @@ export default function Records() {
     dateModifiedTo: "",
     amountFrom: "",
     amountTo: "",
-  })
-  
-  const [showFilters, setShowFilters] = useState(false)
-  
+  });
+
+  const [showFilters, setShowFilters] = useState(false);
+
   // Material choices
   const materialChoices = [
-    { value: 'roda', label: 'Roda' },
-    { value: 'baluwa', label: 'Baluwa' },
-    { value: 'dhunga', label: 'Dhunga' },
-    { value: 'gravel', label: 'Gravel' },
-    { value: 'chips', label: 'Chips' },
-    { value: 'dust', label: 'Dust' },
-    { value: 'mato', label: 'Mato' },
-    { value: 'base/subbase', label: 'Base/Subbase' },
-    { value: 'Itta', label: 'Itta' },
-    { value: 'Kawadi', label: 'Kawadi' },
-    { value: 'other', label: 'Other' },
-  ]
+    { value: "roda", label: "Roda" },
+    { value: "baluwa", label: "Baluwa" },
+    { value: "dhunga", label: "Dhunga" },
+    { value: "gravel", label: "Gravel" },
+    { value: "chips", label: "Chips" },
+    { value: "dust", label: "Dust" },
+    { value: "mato", label: "Mato" },
+    { value: "base/subbase", label: "Base/Subbase" },
+    { value: "Itta", label: "Itta" },
+    { value: "Kawadi", label: "Kawadi" },
+    { value: "other", label: "Other" },
+  ];
 
   // Vehicle size choices
   const vehicleSizeChoices = [
-    { value: '260', label: '260 cubic feet' },
-    { value: '160', label: '160 cubic feet' },
-    { value: '100', label: '100 cubic feet' },
-    { value: 'Other', label: 'Other' },
-  ]
+    { value: "260", label: "260 cubic feet" },
+    { value: "160", label: "160 cubic feet" },
+    { value: "100", label: "100 cubic feet" },
+    { value: "Other", label: "Other" },
+  ];
 
   const fetchBills = async (page = 1) => {
     try {
-      setIsLoading(true)
-      console.log('Fetching bills from API...')
-      
+      setIsLoading(true);
+      console.log("Fetching bills from API...");
+
       // Build query parameters using appliedFilters instead of filters
-      const queryParams = new URLSearchParams()
-      if (page > 1) queryParams.append('page', page)
-      
+      const queryParams = new URLSearchParams();
+      if (page > 1) queryParams.append("page", page);
+
       Object.entries(appliedFilters).forEach(([key, value]) => {
         if (value) {
           // Map frontend filter keys to backend expected keys
           const keyMap = {
-            vehicleSize: 'vehicle_size',
-            issuedBy: 'issued_by',
-            modifiedBy: 'modified_by',
-            dateIssuedFrom: 'date_issued_from',
-            dateIssuedTo: 'date_issued_to',
-            dateModifiedFrom: 'date_modified_from',
-            dateModifiedTo: 'date_modified_to',
-            amountFrom: 'amount_from',
-            amountTo: 'amount_to'
-          }
-          const backendKey = keyMap[key] || key
-          queryParams.append(backendKey, value)
+            vehicleSize: "vehicle_size",
+            issuedBy: "issued_by",
+            modifiedBy: "modified_by",
+            dateIssuedFrom: "date_issued_from",
+            dateIssuedTo: "date_issued_to",
+            dateModifiedFrom: "date_modified_from",
+            dateModifiedTo: "date_modified_to",
+            amountFrom: "amount_from",
+            amountTo: "amount_to",
+          };
+          const backendKey = keyMap[key] || key;
+          queryParams.append(backendKey, value);
         }
-      })
-      
-      const url = `/bills/bills/?${queryParams.toString()}`
-      console.log('Making request to:', url)
-      
-      const response = await api.get(url)
-      console.log('Response received:', response.data)
-      
-      const data = response.data
-      
+      });
+
+      const url = `/bills/bills/?${queryParams.toString()}`;
+      console.log("Making request to:", url);
+
+      const response = await api.get(url);
+      console.log("Response received:", response.data);
+
+      const data = response.data;
+
       // Handle paginated response structure
-      const billsData = data.results || data
-      const isArray = Array.isArray(billsData)
-      
+      const billsData = data.results || data;
+      const isArray = Array.isArray(billsData);
+
       if (!isArray) {
-        console.error('Expected array of bills, received:', billsData)
-        setBills([])
-        return
+        console.error("Expected array of bills, received:", billsData);
+        setBills([]);
+        return;
       }
-      
+
       // Convert data for frontend compatibility
-      const convertedBills = billsData.map(bill => ({
+      const convertedBills = billsData.map((bill) => ({
         ...bill,
         vehicleNumber: bill.vehicle_number,
         dateIssued: bill.date_issued,
@@ -135,50 +151,49 @@ export default function Records() {
         cargo: bill.material,
         expectedTime: bill.eta,
         billIssueTime: new Date(bill.date_issued).toLocaleString("en-US"),
-      }))
-      
-      setBills(convertedBills)
+      }));
+
+      setBills(convertedBills);
       setPagination({
         count: data.count || billsData.length,
         next: data.next,
-        previous: data.previous
-      })
-      
+        previous: data.previous,
+      });
     } catch (error) {
-      console.error("Error fetching bills:", error)
-      console.error("Error response:", error.response)
-      
+      console.error("Error fetching bills:", error);
+      console.error("Error response:", error.response);
+
       // Log more details about the error
       if (error.response) {
-        console.error("Status:", error.response.status)
-        console.error("Headers:", error.response.headers)
-        console.error("Data:", error.response.data)
+        console.error("Status:", error.response.status);
+        console.error("Headers:", error.response.headers);
+        console.error("Data:", error.response.data);
       } else if (error.request) {
-        console.error("Request made but no response:", error.request)
+        console.error("Request made but no response:", error.request);
       } else {
-        console.error("Error message:", error.message)
+        console.error("Error message:", error.message);
       }
-      
+
       // Set empty state on error
-      setBills([])
-      setPagination({ count: 0, next: null, previous: null })
+      setBills([]);
+      setPagination({ count: 0, next: null, previous: null });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchBills(currentPage)
-  }, [appliedFilters, currentPage])
+    fetchBills(currentPage);
+  }, [appliedFilters, currentPage]);
 
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }))
-  }
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
 
   const applyFilters = () => {
-    setAppliedFilters(filters)
-    setCurrentPage(1)
-  }
+    setAppliedFilters(filters);
+    setCurrentPage(1);
+  };
 
   const clearFilters = () => {
     const emptyFilters = {
@@ -195,48 +210,70 @@ export default function Records() {
       dateModifiedTo: "",
       amountFrom: "",
       amountTo: "",
-    }
-    setFilters(emptyFilters)
-    setAppliedFilters(emptyFilters)
-    setCurrentPage(1)
-  }
+    };
+    setFilters(emptyFilters);
+    setAppliedFilters(emptyFilters);
+    setCurrentPage(1);
+  };
 
   const formatDateTime = (dateTime) => {
     return new Date(dateTime).toLocaleDateString("en-US", {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      pending: { color: 'bg-yellow-50 text-yellow-800 border-yellow-200', icon: Clock },
-      completed: { color: 'bg-green-50 text-green-800 border-green-200', icon: CheckCircle },
-      cancelled: { color: 'bg-red-50 text-red-800 border-red-200', icon: XCircle },
-    }
-    
-    const config = statusConfig[status] || statusConfig.pending
-    const Icon = config.icon
-    
+      pending: {
+        color: "bg-yellow-50 text-yellow-800 border-yellow-200",
+        icon: Clock,
+      },
+      completed: {
+        color: "bg-green-50 text-green-800 border-green-200",
+        icon: CheckCircle,
+      },
+      cancelled: {
+        color: "bg-red-50 text-red-800 border-red-200",
+        icon: XCircle,
+      },
+    };
+
+    const config = statusConfig[status] || statusConfig.pending;
+    const Icon = config.icon;
+
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-1 border text-xs font-medium ${config.color}`}>
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-1 border text-xs font-medium ${config.color}`}
+      >
         <Icon className="h-3 w-3" />
         {status}
       </span>
-    )
-  }
+    );
+  };
 
   const exportToCSV = () => {
     const csvHeaders = [
-      'Bill Number', 'Vehicle Number', 'Date Issued', 'Amount', 'Status',
-      'Material', 'Issue Location', 'Destination', 'Region', 'Vehicle Size',
-      'Issued By', 'Modified By', 'Modified Date', 'Remarks'
-    ]
-    
-    const csvData = bills.map(bill => [
+      "Bill Number",
+      "Vehicle Number",
+      "Date Issued",
+      "Amount",
+      "Status",
+      "Material",
+      "Issue Location",
+      "Destination",
+      "Region",
+      "Vehicle Size",
+      "Issued By",
+      "Modified By",
+      "Modified Date",
+      "Remarks",
+    ];
+
+    const csvData = bills.map((bill) => [
       bill.code,
       bill.vehicle_number,
       formatDateTime(bill.date_issued),
@@ -247,145 +284,166 @@ export default function Records() {
       bill.destination,
       bill.region,
       bill.vehicle_size,
-      bill.issued_by_name || '',
-      bill.modified_by_name || '',
-      bill.modified_date ? formatDateTime(bill.modified_date) : '',
-      bill.remark || ''
-    ])
-    
+      bill.issued_by_name || "",
+      bill.modified_by_name || "",
+      bill.modified_date ? formatDateTime(bill.modified_date) : "",
+      bill.remark || "",
+    ]);
+
     const csvContent = [csvHeaders, ...csvData]
-      .map(row => row.map(field => `"${field}"`).join(','))
-      .join('\n')
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `bills_export_${new Date().toISOString().split('T')[0]}.csv`
-    a.click()
-    window.URL.revokeObjectURL(url)
-  }
+      .map((row) => row.map((field) => `"${field}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `bills_export_${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
 
   // Calculate total amounts (excluding cancelled bills)
   const calculateTotals = () => {
     const pendingTotal = bills
-      .filter(bill => bill.status === 'pending')
-      .reduce((sum, bill) => sum + (bill.amount || 0), 0)
-    
-    const completedTotal = bills
-      .filter(bill => bill.status === 'completed')
-      .reduce((sum, bill) => sum + (bill.amount || 0), 0)
-    
-    const cancelledTotal = bills
-      .filter(bill => bill.status === 'cancelled')
-      .reduce((sum, bill) => sum + (bill.amount || 0), 0)
-    
-    const grandTotal = pendingTotal + completedTotal
-    
-    return { pendingTotal, completedTotal, cancelledTotal, grandTotal }
-  }
+      .filter((bill) => bill.status === "pending")
+      .reduce((sum, bill) => sum + (bill.amount || 0), 0);
 
-  const totals = calculateTotals()
+    const completedTotal = bills
+      .filter((bill) => bill.status === "completed")
+      .reduce((sum, bill) => sum + (bill.amount || 0), 0);
+
+    const cancelledTotal = bills
+      .filter((bill) => bill.status === "cancelled")
+      .reduce((sum, bill) => sum + (bill.amount || 0), 0);
+
+    const grandTotal = pendingTotal + completedTotal;
+
+    return { pendingTotal, completedTotal, cancelledTotal, grandTotal };
+  };
+
+  const totals = calculateTotals();
 
   // Simple and reliable PDF export
   const exportToPDF = () => {
     try {
-      const doc = new jsPDF('l', 'mm', 'a4') // landscape for more width
-      
+      const doc = new jsPDF("l", "mm", "a4"); // landscape for more width
+
       // Header
-      doc.setFontSize(18)
-      doc.setTextColor(40, 40, 40)
-      doc.text('Bill Records Report', 20, 20)
-      
-      doc.setFontSize(10)
-      doc.setTextColor(100, 100, 100)
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 30)
-      doc.text(`Total Records: ${bills.length}`, 20, 37)
-      
+      doc.setFontSize(18);
+      doc.setTextColor(40, 40, 40);
+      doc.text("Bill Records Report", 20, 20);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 30);
+      doc.text(`Total Records: ${bills.length}`, 20, 37);
+
       // Table setup
-      let yPosition = 50
-      const lineHeight = 6
-      const pageHeight = 190 // leave space for footer
-      
+      let yPosition = 50;
+      const lineHeight = 6;
+      const pageHeight = 190; // leave space for footer
+
       // Table headers
-      doc.setFontSize(9)
-      doc.setFont(undefined, 'bold')
-      doc.setTextColor(255, 255, 255)
-      doc.setFillColor(41, 128, 185)
-      doc.rect(15, yPosition - 4, 260, 8, 'F')
-      
-      doc.text('Bill #', 20, yPosition)
-      doc.text('Vehicle', 50, yPosition)
-      doc.text('Route', 80, yPosition)
-      doc.text('Material', 140, yPosition)
-      doc.text('Amount', 170, yPosition)
-      doc.text('Status', 200, yPosition)
-      doc.text('Date', 220, yPosition)
-      
-      yPosition += 10
-      
+      doc.setFontSize(9);
+      doc.setFont(undefined, "bold");
+      doc.setTextColor(255, 255, 255);
+      doc.setFillColor(41, 128, 185);
+      doc.rect(15, yPosition - 4, 260, 8, "F");
+
+      doc.text("Bill #", 20, yPosition);
+      doc.text("Vehicle", 50, yPosition);
+      doc.text("Route", 80, yPosition);
+      doc.text("Material", 140, yPosition);
+      doc.text("Amount", 170, yPosition);
+      doc.text("Status", 200, yPosition);
+      doc.text("Date", 220, yPosition);
+
+      yPosition += 10;
+
       // Table data
-      doc.setFont(undefined, 'normal')
-      doc.setFontSize(8)
-      doc.setTextColor(40, 40, 40)
-      
+      doc.setFont(undefined, "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(40, 40, 40);
+
       bills.forEach((bill, index) => {
         if (yPosition > pageHeight) {
-          doc.addPage()
-          yPosition = 20
+          doc.addPage();
+          yPosition = 20;
         }
-        
+
         // Alternate row colors
         if (index % 2 === 0) {
-          doc.setFillColor(248, 249, 250)
-          doc.rect(15, yPosition - 3, 260, lineHeight, 'F')
+          doc.setFillColor(248, 249, 250);
+          doc.rect(15, yPosition - 3, 260, lineHeight, "F");
         }
-        
-        doc.text(bill.code || '', 20, yPosition)
-        doc.text(bill.vehicle_number || '', 50, yPosition)
-        
+
+        doc.text(bill.code || "", 20, yPosition);
+        doc.text(bill.vehicle_number || "", 50, yPosition);
+
         // Simple route format with consistent spacing
-        const route = `${bill.issue_location} - ${bill.destination}`
-        const maxRouteLength = 30 // Increased from 25
-        doc.text(route.length > maxRouteLength ? route.substring(0, maxRouteLength) + '...' : route, 80, yPosition)
-        
-        doc.text(bill.material || '', 140, yPosition)
-        doc.text(`Rs. ${(bill.amount || 0).toLocaleString()}`, 170, yPosition)
-        doc.text(bill.status || '', 200, yPosition)
-        doc.text(new Date(bill.date_issued).toLocaleString(), 220, yPosition)
-        
-        yPosition += lineHeight
-      })
-      
+        const route = `${bill.issue_location} - ${bill.destination}`;
+        const maxRouteLength = 30; // Increased from 25
+        doc.text(
+          route.length > maxRouteLength
+            ? route.substring(0, maxRouteLength) + "..."
+            : route,
+          80,
+          yPosition
+        );
+
+        doc.text(bill.material || "", 140, yPosition);
+        doc.text(`Rs. ${(bill.amount || 0).toLocaleString()}`, 170, yPosition);
+        doc.text(bill.status || "", 200, yPosition);
+        doc.text(new Date(bill.date_issued).toLocaleString(), 220, yPosition);
+
+        yPosition += lineHeight;
+      });
+
       // Financial summary
-      yPosition += 15
-      doc.setFontSize(12)
-      doc.setFont(undefined, 'bold')
-      doc.setTextColor(40, 40, 40)
-      doc.text('Financial Summary', 20, yPosition)
-      
-      yPosition += 10
-      doc.setFontSize(10)
-      doc.setFont(undefined, 'normal')
-      doc.text(`Pending Amount: Rs. ${totals.pendingTotal.toLocaleString()}`, 20, yPosition)
-      doc.text(`Completed Amount: Rs. ${totals.completedTotal.toLocaleString()}`, 20, yPosition + 7)
-      doc.text(`Cancelled Amount: Rs. ${totals.cancelledTotal.toLocaleString()} (excluded)`, 20, yPosition + 14)
-      
-      doc.setFont(undefined, 'bold')
-      doc.setTextColor(0, 100, 0)
-      doc.text(`Total Revenue: Rs. ${totals.grandTotal.toLocaleString()}`, 20, yPosition + 21)
-      
-      doc.save(`bills_report_${new Date().toISOString().split('T')[0]}.pdf`)
-      
+      yPosition += 15;
+      doc.setFontSize(12);
+      doc.setFont(undefined, "bold");
+      doc.setTextColor(40, 40, 40);
+      doc.text("Financial Summary", 20, yPosition);
+
+      yPosition += 10;
+      doc.setFontSize(10);
+      doc.setFont(undefined, "normal");
+      doc.text(
+        `Pending Amount: Rs. ${totals.pendingTotal.toLocaleString()}`,
+        20,
+        yPosition
+      );
+      doc.text(
+        `Completed Amount: Rs. ${totals.completedTotal.toLocaleString()}`,
+        20,
+        yPosition + 7
+      );
+      doc.text(
+        `Cancelled Amount: Rs. ${totals.cancelledTotal.toLocaleString()} (excluded)`,
+        20,
+        yPosition + 14
+      );
+
+      doc.setFont(undefined, "bold");
+      doc.setTextColor(0, 100, 0);
+      doc.text(
+        `Total Revenue: Rs. ${totals.grandTotal.toLocaleString()}`,
+        20,
+        yPosition + 21
+      );
+
+      doc.save(`bills_report_${new Date().toISOString().split("T")[0]}.pdf`);
     } catch (error) {
-      console.error('PDF generation failed:', error)
-      alert('PDF export failed. Please try the CSV export instead.')
+      console.error("PDF generation failed:", error);
+      alert("PDF export failed. Please try the CSV export instead.");
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar 
+      <Navbar
         title="Bill Records"
         subtitle="View and analyze all shipment records"
         showBackButton={true}
@@ -395,22 +453,22 @@ export default function Records() {
             icon: <Download className="h-4 w-4" />,
             onClick: exportToCSV,
             disabled: bills.length === 0,
-            className: "bg-gray-900 hover:bg-gray-800 text-white"
+            className: "bg-gray-900 hover:bg-gray-800 text-white",
           },
           {
-            label: "Export PDF", 
+            label: "Export PDF",
             icon: <Printer className="h-4 w-4" />,
             onClick: exportToPDF,
             disabled: bills.length === 0,
-            className: "bg-gray-700 hover:bg-gray-600 text-white"
-          }
+            className: "bg-gray-700 hover:bg-gray-600 text-white",
+          },
         ]}
       />
 
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
+      <div className="max-w-7xl mx-auto p-2 space-y-6">
         {/* Enhanced Header Section */}
         <div className="bg-white border border-gray-200 shadow-sm">
-          <div className="p-6">
+          <div className="p-3">
             <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
@@ -418,38 +476,52 @@ export default function Records() {
                     <FileText className="h-5 w-5 text-blue-600" />
                   </div>
                   <div>
-                    <h1 className="text-2xl font-semibold text-gray-900">Records Management</h1>
-                    <p className="text-sm text-gray-500">Track and manage all bill records</p>
+                    <h1 className="text-2xl font-semibold text-gray-900">
+                      Records Management
+                    </h1>
+                    <p className="text-sm text-gray-500">
+                      Track and manage all bill records
+                    </p>
                   </div>
                 </div>
-                
+
+              </div>
+              
                 <div className="flex items-center gap-6 text-sm">
                   <div className="flex items-center gap-2">
                     <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
                     <span className="text-gray-600">
-                      Showing <span className="font-medium text-gray-900">{bills.length}</span> of{" "}
-                      <span className="font-medium text-gray-900">{pagination.count}</span> records
+                      Showing{" "}
+                      <span className="font-medium text-gray-900">
+                        {bills.length}
+                      </span>{" "}
+                      of{" "}
+                      <span className="font-medium text-gray-900">
+                        {pagination.count}
+                      </span>{" "}
+                      records
                     </span>
                   </div>
-                  
+
                   {bills.length > 0 && (
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-2 bg-green-500 rounded-full"></div>
                       <span className="text-gray-600">
-                        Total Value: <span className="font-semibold text-green-700">Rs.{calculateTotals().grandTotal.toLocaleString()}</span>
+                        Total Value:{" "}
+                        <span className="font-semibold text-green-700">
+                          Rs.{calculateTotals().grandTotal.toLocaleString()}
+                        </span>
                       </span>
                     </div>
                   )}
                 </div>
-              </div>
-              
               <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
                   onClick={() => setShowFilters(!showFilters)}
                   className={`flex items-center gap-2 px-4 py-2 border transition-colors ${
-                    showFilters 
-                      ? "border-blue-300 bg-blue-50 text-blue-700" 
+                    showFilters
+                      ? "border-blue-300 bg-blue-50 text-blue-700"
                       : "border-gray-300 text-gray-700 hover:bg-gray-50"
                   }`}
                 >
@@ -457,9 +529,9 @@ export default function Records() {
                   Filters
                   {showFilters && <X className="h-3 w-3 ml-1" />}
                 </Button>
-                
+
                 <div className="h-8 w-px bg-gray-200"></div>
-                
+
                 <div className="flex items-center gap-2 text-sm text-gray-500">
                   <Clock className="h-4 w-4" />
                   <span>Last updated: {new Date().toLocaleTimeString()}</span>
@@ -476,10 +548,14 @@ export default function Records() {
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4 text-gray-600" />
-                  <h3 className="text-lg font-medium text-gray-900">Filter Records</h3>
+                  <h3 className="text-lg font-medium text-gray-900">
+                    Filter Records
+                  </h3>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500">Clear all filters</span>
+                  <span className="text-xs text-gray-500">
+                    Clear all filters
+                  </span>
                   <Button
                     type="button"
                     variant="ghost"
@@ -491,18 +567,28 @@ export default function Records() {
                 </div>
               </div>
             </div>
-            
-            <form onSubmit={(e) => { e.preventDefault(); applyFilters(); }} className="p-6">
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                applyFilters();
+              }}
+              className="p-6"
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Search */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Search Records</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Search Records
+                  </label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <input
                       type="text"
                       value={filters.search}
-                      onChange={(e) => handleFilterChange('search', e.target.value)}
+                      onChange={(e) =>
+                        handleFilterChange("search", e.target.value)
+                      }
                       placeholder="Search bills, vehicles, drivers..."
                       className="pl-10 w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white hover:border-gray-400"
                     />
@@ -511,10 +597,14 @@ export default function Records() {
 
                 {/* Status */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Status
+                  </label>
                   <select
                     value={filters.status}
-                    onChange={(e) => handleFilterChange('status', e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("status", e.target.value)
+                    }
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white hover:border-gray-400"
                   >
                     <option value="">All</option>
@@ -526,25 +616,35 @@ export default function Records() {
 
                 {/* Material */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Material Type</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Material Type
+                  </label>
                   <select
                     value={filters.material}
-                    onChange={(e) => handleFilterChange('material', e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("material", e.target.value)
+                    }
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white hover:border-gray-400"
                   >
                     <option value="">All Materials</option>
-                    {materialChoices.map(choice => (
-                      <option key={choice.value} value={choice.value}>{choice.label}</option>
+                    {materialChoices.map((choice) => (
+                      <option key={choice.value} value={choice.value}>
+                        {choice.label}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 {/* Region */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Region</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Region
+                  </label>
                   <select
                     value={filters.region}
-                    onChange={(e) => handleFilterChange('region', e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("region", e.target.value)
+                    }
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white hover:border-gray-400"
                   >
                     <option value="">All Regions</option>
@@ -555,48 +655,66 @@ export default function Records() {
 
                 {/* Vehicle Size */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Vehicle Size</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Vehicle Size
+                  </label>
                   <select
                     value={filters.vehicleSize}
-                    onChange={(e) => handleFilterChange('vehicleSize', e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("vehicleSize", e.target.value)
+                    }
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white hover:border-gray-400"
                   >
                     <option value="">All Sizes</option>
-                    {vehicleSizeChoices.map(choice => (
-                      <option key={choice.value} value={choice.value}>{choice.label}</option>
+                    {vehicleSizeChoices.map((choice) => (
+                      <option key={choice.value} value={choice.value}>
+                        {choice.label}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 {/* Date From */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Issue Date From</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Issue Date From
+                  </label>
                   <input
                     type="date"
                     value={filters.dateIssuedFrom}
-                    onChange={(e) => handleFilterChange('dateIssuedFrom', e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("dateIssuedFrom", e.target.value)
+                    }
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-400"
                   />
                 </div>
 
                 {/* Date To */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Issue Date To</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Issue Date To
+                  </label>
                   <input
                     type="date"
                     value={filters.dateIssuedTo}
-                    onChange={(e) => handleFilterChange('dateIssuedTo', e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("dateIssuedTo", e.target.value)
+                    }
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-400"
                   />
                 </div>
 
                 {/* Issued By */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Issued By</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Issued By
+                  </label>
                   <input
                     type="text"
                     value={filters.issuedBy}
-                    onChange={(e) => handleFilterChange('issuedBy', e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("issuedBy", e.target.value)
+                    }
                     placeholder="Enter issuer name..."
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white hover:border-gray-400"
                   />
@@ -604,11 +722,15 @@ export default function Records() {
 
                 {/* Min Amount */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Min Amount (Rs.)</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Min Amount (Rs.)
+                  </label>
                   <input
                     type="number"
                     value={filters.amountFrom}
-                    onChange={(e) => handleFilterChange('amountFrom', e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("amountFrom", e.target.value)
+                    }
                     placeholder="0"
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-400"
                   />
@@ -616,11 +738,15 @@ export default function Records() {
 
                 {/* Max Amount */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Max Amount (Rs.)</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Max Amount (Rs.)
+                  </label>
                   <input
                     type="number"
                     value={filters.amountTo}
-                    onChange={(e) => handleFilterChange('amountTo', e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("amountTo", e.target.value)
+                    }
                     placeholder="999999"
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-400"
                   />
@@ -628,11 +754,15 @@ export default function Records() {
 
                 {/* Checked By */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Verified By</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Verified By
+                  </label>
                   <input
                     type="text"
                     value={filters.modifiedBy}
-                    onChange={(e) => handleFilterChange('modifiedBy', e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("modifiedBy", e.target.value)
+                    }
                     placeholder="Enter verifier name..."
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white hover:border-gray-400"
                   />
@@ -640,22 +770,30 @@ export default function Records() {
 
                 {/* Checked Date From */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Verified Date From</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Verified Date From
+                  </label>
                   <input
                     type="date"
                     value={filters.dateModifiedFrom}
-                    onChange={(e) => handleFilterChange('dateModifiedFrom', e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("dateModifiedFrom", e.target.value)
+                    }
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-400"
                   />
                 </div>
 
                 {/* Checked Date To */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Verified Date To</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Verified Date To
+                  </label>
                   <input
                     type="date"
                     value={filters.dateModifiedTo}
-                    onChange={(e) => handleFilterChange('dateModifiedTo', e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("dateModifiedTo", e.target.value)
+                    }
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-400"
                   />
                 </div>
@@ -667,9 +805,9 @@ export default function Records() {
                   <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
                   <span>Use filters to narrow down your search results</span>
                 </div>
-                
+
                 <div className="flex gap-3">
-                  <Button 
+                  <Button
                     type="button"
                     variant="outline"
                     onClick={clearFilters}
@@ -677,7 +815,7 @@ export default function Records() {
                   >
                     Reset Filters
                   </Button>
-                  <Button 
+                  <Button
                     type="submit"
                     className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 text-sm font-medium shadow-sm transition-all hover:shadow-md"
                   >
@@ -699,19 +837,26 @@ export default function Records() {
                   <div className="h-3 w-3 bg-blue-600 rounded-full animate-pulse"></div>
                 </div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Loading Records</h3>
-              <p className="text-gray-500">Fetching your data, please wait...</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Loading Records
+              </h3>
+              <p className="text-gray-500">
+                Fetching your data, please wait...
+              </p>
             </div>
           ) : bills.length === 0 ? (
             <div className="text-center py-24">
               <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
                 <FileText className="h-10 w-10 text-blue-400" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">No Records Found</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                No Records Found
+              </h3>
               <p className="text-gray-500 max-w-md mx-auto mb-6">
-                No bills match your current search criteria. Try adjusting your filters or search terms.
+                No bills match your current search criteria. Try adjusting your
+                filters or search terms.
               </p>
-              <Button 
+              <Button
                 onClick={clearFilters}
                 variant="outline"
                 className="px-6 py-2.5 border-blue-300 text-blue-600 hover:bg-blue-50"
@@ -748,7 +893,9 @@ export default function Records() {
                         Material
                       </div>
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Amount
+                    </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       <div className="flex items-center gap-2">
                         <Clock className="h-3 w-3 text-gray-500" />
@@ -761,15 +908,17 @@ export default function Records() {
                         Issued by
                       </div>
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Status
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-100">
                   {bills.map((bill, index) => (
-                    <tr 
-                      key={bill.id} 
+                    <tr
+                      key={bill.id}
                       className={`cursor-pointer transition-all duration-200 hover:bg-blue-50 hover:shadow-sm ${
-                        index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
+                        index % 2 === 0 ? "bg-white" : "bg-gray-50/30"
                       }`}
                       onClick={() => setSelectedBill(bill)}
                     >
@@ -779,9 +928,11 @@ export default function Records() {
                             {bill.code?.slice(-2) || '##'}
                           </div> */}
                           <div>
-                            <div className="text-sm font-semibold text-gray-900">#{bill.code}</div>
+                            <div className="text-sm font-semibold text-gray-900">
+                              #{bill.code}
+                            </div>
                             <div className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full inline-block">
-                              {bill.issued_by_name || 'System'}
+                              {bill.issued_by_name || "System"}
                             </div>
                           </div>
                         </div>
@@ -792,7 +943,9 @@ export default function Records() {
                             <Truck className="h-4 w-4 text-green-600" />
                           </div>
                           <div>
-                            <div className="text-sm font-semibold text-gray-900">{bill.vehicle_number}</div>
+                            <div className="text-sm font-semibold text-gray-900">
+                              {bill.vehicle_number}
+                            </div>
                             <div className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full inline-block">
                               {bill.vehicle_size} cu ft
                             </div>
@@ -805,7 +958,9 @@ export default function Records() {
                             <MapPin className="h-4 w-4 text-blue-600" />
                           </div>
                           <div className="min-w-0 max-w-[200px]">
-                            <div className="text-sm font-medium text-gray-900 truncate">{bill.issue_location}</div>
+                            <div className="text-sm font-medium text-gray-900 truncate">
+                              {bill.issue_location}
+                            </div>
                             <div className="text-xs text-gray-500 truncate flex items-center gap-1">
                               <span className="text-gray-400">→</span>
                               {bill.destination}
@@ -819,13 +974,17 @@ export default function Records() {
                             <Package className="h-4 w-4 text-orange-600" />
                           </div>
                           <div>
-                            <div className="text-sm font-medium text-gray-900 capitalize">{bill.material}</div>
+                            <div className="text-sm font-medium text-gray-900 capitalize">
+                              {bill.material}
+                            </div>
                             <div className="text-xs text-gray-500 capitalize">
-                              <span className={`px-2 py-0.5 rounded-full text-xs ${
-                                bill.region === 'local' 
-                                  ? 'bg-green-100 text-green-700' 
-                                  : 'bg-blue-100 text-blue-700'
-                              }`}>
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-xs ${
+                                  bill.region === "local"
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-blue-100 text-blue-700"
+                                }`}
+                              >
                                 {bill.region}
                               </span>
                             </div>
@@ -833,25 +992,31 @@ export default function Records() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className={`text-sm font-medium ${
-                          bill.status === 'pending' 
-                            ? 'text-blue-600' 
-                            : bill.status === 'cancelled'
-                            ? 'text-red-500 line-through'
-                            : 'text-green-600'
-                        }`}>
+                        <div
+                          className={`text-sm font-medium ${
+                            bill.status === "pending"
+                              ? "text-blue-600"
+                              : bill.status === "cancelled"
+                              ? "text-red-500 line-through"
+                              : "text-green-600"
+                          }`}
+                        >
                           Rs.{bill.amount?.toLocaleString()}
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-gray-400" />
-                          <div className="text-sm text-gray-900">{formatDateTime(bill.date_issued)}</div>
+                          <div className="text-sm text-gray-900">
+                            {formatDateTime(bill.date_issued)}
+                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div>
-                          <div className="text-sm text-gray-900">{bill.issued_by_name || '-'}</div>
+                          <div className="text-sm text-gray-900">
+                            {bill.issued_by_name || "-"}
+                          </div>
                           {bill.modified_date && (
                             <div className="text-xs text-gray-500">
                               {formatDateTime(bill.modified_date)}
@@ -878,52 +1043,62 @@ export default function Records() {
                 <FileText className="h-5 w-5 text-gray-500" />
                 Financial Summary
               </h3>
-              <p className="text-sm text-gray-500 mt-1">Overview of financial metrics for displayed records</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Overview of financial metrics for displayed records
+              </p>
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="p-4 border border-gray-200">
                   <div className="flex items-center justify-between mb-3">
-                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Pending Amount</div>
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Pending Amount
+                    </div>
                     <Clock className="h-4 w-4 text-gray-400" />
                   </div>
                   <div className="text-2xl font-semibold text-gray-900 mb-1">
                     Rs.{calculateTotals().pendingTotal.toLocaleString()}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {bills.filter(b => b.status === 'pending').length} bills
+                    {bills.filter((b) => b.status === "pending").length} bills
                   </div>
                 </div>
-                
+
                 <div className="p-4 border border-gray-200">
                   <div className="flex items-center justify-between mb-3">
-                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Completed Amount</div>
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Completed Amount
+                    </div>
                     <CheckCircle className="h-4 w-4 text-gray-400" />
                   </div>
                   <div className="text-2xl font-semibold text-gray-900 mb-1">
                     Rs.{calculateTotals().completedTotal.toLocaleString()}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {bills.filter(b => b.status === 'completed').length} bills
+                    {bills.filter((b) => b.status === "completed").length} bills
                   </div>
                 </div>
-                
+
                 <div className="p-4 border border-gray-200">
                   <div className="flex items-center justify-between mb-3">
-                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">Cancelled Amount</div>
+                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Cancelled Amount
+                    </div>
                     <XCircle className="h-4 w-4 text-gray-400" />
                   </div>
                   <div className="text-2xl font-semibold text-red-600 line-through mb-1">
                     Rs.{calculateTotals().cancelledTotal.toLocaleString()}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {bills.filter(b => b.status === 'cancelled').length} bills
+                    {bills.filter((b) => b.status === "cancelled").length} bills
                   </div>
                 </div>
-                
+
                 <div className="p-4 bg-gray-900 text-white">
                   <div className="flex items-center justify-between mb-3">
-                    <div className="text-xs font-medium text-gray-300 uppercase tracking-wider">Total Revenue</div>
+                    <div className="text-xs font-medium text-gray-300 uppercase tracking-wider">
+                      Total Revenue
+                    </div>
                     <Package className="h-4 w-4 text-gray-300" />
                   </div>
                   <div className="text-2xl font-semibold text-white mb-1">
@@ -934,15 +1109,18 @@ export default function Records() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-6 p-4 bg-gray-50 border border-gray-200">
                 <div className="flex items-start gap-4">
                   <FileText className="h-5 w-5 text-gray-400 mt-0.5" />
                   <div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-2">Revenue Calculation Method</h4>
+                    <h4 className="text-sm font-medium text-gray-900 mb-2">
+                      Revenue Calculation Method
+                    </h4>
                     <p className="text-xs text-gray-600 leading-relaxed">
-                      Total revenue includes both pending and completed bills. Cancelled bills are excluded 
-                      from all revenue calculations to ensure accurate financial reporting.
+                      Total revenue includes both pending and completed bills.
+                      Cancelled bills are excluded from all revenue calculations
+                      to ensure accurate financial reporting.
                     </p>
                   </div>
                 </div>
@@ -967,7 +1145,9 @@ export default function Records() {
               <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
                   disabled={!pagination.previous || isLoading}
                   className="px-4 py-2 border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -978,7 +1158,7 @@ export default function Records() {
                 </div>
                 <Button
                   variant="outline"
-                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  onClick={() => setCurrentPage((prev) => prev + 1)}
                   disabled={!pagination.next || isLoading}
                   className="px-4 py-2 border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -991,7 +1171,10 @@ export default function Records() {
 
         {/* Comprehensive Bill Details Modal */}
         {selectedBill && (
-          <Dialog open={!!selectedBill} onOpenChange={() => setSelectedBill(null)}>
+          <Dialog
+            open={!!selectedBill}
+            onOpenChange={() => setSelectedBill(null)}
+          >
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
@@ -999,13 +1182,17 @@ export default function Records() {
                   Bill Details - #{selectedBill.code}
                 </DialogTitle>
               </DialogHeader>
-              
+
               <div className="space-y-6">
                 {/* Status and Basic Info */}
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="text-lg font-semibold">{selectedBill.vehicle_number}</h3>
-                    <p className="text-gray-600">{selectedBill.vehicle_size} cubic feet</p>
+                    <h3 className="text-lg font-semibold">
+                      {selectedBill.vehicle_number}
+                    </h3>
+                    <p className="text-gray-600">
+                      {selectedBill.vehicle_size} cubic feet
+                    </p>
                   </div>
                   {getStatusBadge(selectedBill.status)}
                 </div>
@@ -1013,19 +1200,44 @@ export default function Records() {
                 {/* Route Information */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Route Information</h4>
+                    <h4 className="font-medium text-gray-900 mb-2">
+                      Route Information
+                    </h4>
                     <div className="space-y-2 text-sm">
-                      <div><span className="text-gray-600">From:</span> {selectedBill.issue_location}</div>
-                      <div><span className="text-gray-600">To:</span> {selectedBill.destination}</div>
-                      <div><span className="text-gray-600">Region:</span> <span className="capitalize">{selectedBill.region}</span></div>
+                      <div>
+                        <span className="text-gray-600">From:</span>{" "}
+                        {selectedBill.issue_location}
+                      </div>
+                      <div>
+                        <span className="text-gray-600">To:</span>{" "}
+                        {selectedBill.destination}
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Region:</span>{" "}
+                        <span className="capitalize">
+                          {selectedBill.region}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  
+
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Cargo & Payment</h4>
+                    <h4 className="font-medium text-gray-900 mb-2">
+                      Cargo & Payment
+                    </h4>
                     <div className="space-y-2 text-sm">
-                      <div><span className="text-gray-600">Material:</span> <span className="capitalize">{selectedBill.material}</span></div>
-                      <div><span className="text-gray-600">Amount:</span> <span className="font-medium text-green-600">Rs. {selectedBill.amount?.toLocaleString()}</span></div>
+                      <div>
+                        <span className="text-gray-600">Material:</span>{" "}
+                        <span className="capitalize">
+                          {selectedBill.material}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Amount:</span>{" "}
+                        <span className="font-medium text-green-600">
+                          Rs. {selectedBill.amount?.toLocaleString()}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1041,7 +1253,9 @@ export default function Records() {
                     {selectedBill.modified_date && (
                       <div className="flex justify-between">
                         <span className="text-gray-600">Last Modified:</span>
-                        <span>{formatDateTime(selectedBill.modified_date)}</span>
+                        <span>
+                          {formatDateTime(selectedBill.modified_date)}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -1053,7 +1267,7 @@ export default function Records() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Issued By:</span>
-                      <span>{selectedBill.issued_by_name || 'System'}</span>
+                      <span>{selectedBill.issued_by_name || "System"}</span>
                     </div>
                     {selectedBill.modified_by_name && (
                       <div className="flex justify-between">
@@ -1066,11 +1280,15 @@ export default function Records() {
 
                 {/* Vehicle Details */}
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Vehicle Details</h4>
+                  <h4 className="font-medium text-gray-900 mb-2">
+                    Vehicle Details
+                  </h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Vehicle Number:</span>
-                      <span className="font-medium">{selectedBill.vehicle_number}</span>
+                      <span className="font-medium">
+                        {selectedBill.vehicle_number}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Vehicle Size:</span>
@@ -1081,7 +1299,9 @@ export default function Records() {
 
                 {/* Additional Information */}
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Additional Information</h4>
+                  <h4 className="font-medium text-gray-900 mb-2">
+                    Additional Information
+                  </h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Bill Code:</span>
@@ -1113,5 +1333,5 @@ export default function Records() {
         )}
       </div>
     </div>
-  )
+  );
 }

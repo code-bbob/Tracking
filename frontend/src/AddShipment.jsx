@@ -343,7 +343,7 @@ export default function AddShipment() {
                   </h3>
                 </div>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                   <div className="space-y-2">
                     <Label className="text-sm font-medium flex items-center gap-1">
                       Material | सामग्री 
