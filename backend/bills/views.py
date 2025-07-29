@@ -35,7 +35,7 @@ def get_active_bills(request):
                 Q(destination__icontains=search_query) |
                 Q(material__icontains=search_query) |
                 Q(customer_name__icontains=search_query)
-            )
+            ).order_by('-date_issued')
         
         serializer = BillSerializer(queryset, many=True)
         return Response({
@@ -69,7 +69,7 @@ def get_completed_bills(request):
                 Q(destination__icontains=search_query) |
                 Q(material__icontains=search_query) |
                 Q(customer_name__icontains=search_query)
-            )
+            ).order_by('-modified_date')
         
         # Apply pagination
         paginator = CustomPagination()
@@ -108,7 +108,7 @@ def get_cancelled_bills(request):
                 Q(destination__icontains=search_query) |
                 Q(material__icontains=search_query) |
                 Q(customer_name__icontains=search_query)
-            )
+            ).order_by('-modified_date')
         
         # Apply pagination
         paginator = CustomPagination()
