@@ -40,7 +40,7 @@ const Analytics = () => {
   const [analyticsData, setAnalyticsData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [timeRange, setTimeRange] = useState("30")
+  const [timeRange, setTimeRange] = useState("7")
   const [selectedView, setSelectedView] = useState("overview")
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL
@@ -264,17 +264,17 @@ const Analytics = () => {
       <div className="container mx-auto px-4 py-6 max-w-none">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 shadow-sm rounded-lg p-4 mb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center space-x-3">
               <Tabs value={selectedView} onValueChange={setSelectedView}>
                 <TabsList className="grid grid-cols-2 bg-white rounded-lg p-1 shadow-sm border">
                   <TabsTrigger value="overview" className="flex items-center gap-2 rounded-md text-sm px-2 py-1">
                     <Eye className="h-4 w-4" />
-                    <span className="hidden sm:inline">Overview</span>
+                    <span className="sm:inline">Overview</span>
                   </TabsTrigger>
                   <TabsTrigger value="insights" className="flex items-center gap-2 rounded-md text-sm px-2 py-1">
                     <BarChart3 className="h-4 w-4" />
-                    <span className="hidden sm:inline">Insights</span>
+                    <span className="sm:inline">Insights</span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -285,6 +285,7 @@ const Analytics = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="1">Last 1 days</SelectItem>
                   <SelectItem value="7">Last 7 days</SelectItem>
                   <SelectItem value="30">Last 30 days</SelectItem>
                   <SelectItem value="90">Last 90 days</SelectItem>
@@ -299,7 +300,7 @@ const Analytics = () => {
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             {/* Key Metrics */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-3 gap-4">
               <MetricCard
                 title="Total Bills"
                 value={analyticsData.summary.total_bills.toLocaleString()}
