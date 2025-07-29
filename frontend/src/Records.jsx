@@ -1037,91 +1037,111 @@ export default function Records() {
 
         {/* Financial Summary */}
         {bills.length > 0 && (
-          <div className="bg-white border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900 flex items-center gap-2">
-                <FileText className="h-5 w-5 text-gray-500" />
-                Financial Summary
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-100">
+              <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-3">
+                <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                  <FileText className="h-4 w-4 text-white" />
+                </div>
+                Financial Overview
               </h3>
-              <p className="text-sm text-gray-500 mt-1">
-                Overview of financial metrics for displayed records
+              <p className="text-sm text-gray-600 mt-1 ml-11">
+                Summary of all displayed records
               </p>
             </div>
+            
             <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-4 border border-gray-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Pending Amount
+              {/* Summary Cards */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                {/* Pending */}
+                <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg p-4 border border-yellow-200">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center">
+                      <Clock className="h-5 w-5 text-white" />
                     </div>
-                    <Clock className="h-4 w-4 text-gray-400" />
+                    <div>
+                      <div className="text-sm font-medium text-yellow-700">Pending</div>
+                      <div className="text-xs text-yellow-600">
+                        {bills.filter((b) => b.status === "pending").length} bills
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-2xl font-semibold text-gray-900 mb-1">
+                  <div className="text-2xl font-bold text-yellow-800">
                     Rs.{calculateTotals().pendingTotal.toLocaleString()}
                   </div>
-                  <div className="text-xs text-gray-500">
-                    {bills.filter((b) => b.status === "pending").length} bills
-                  </div>
                 </div>
 
-                <div className="p-4 border border-gray-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Completed Amount
+                {/* Completed */}
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                      <CheckCircle className="h-5 w-5 text-white" />
                     </div>
-                    <CheckCircle className="h-4 w-4 text-gray-400" />
+                    <div>
+                      <div className="text-sm font-medium text-green-700">Completed</div>
+                      <div className="text-xs text-green-600">
+                        {bills.filter((b) => b.status === "completed").length} bills
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-2xl font-semibold text-gray-900 mb-1">
+                  <div className="text-2xl font-bold text-green-800">
                     Rs.{calculateTotals().completedTotal.toLocaleString()}
                   </div>
-                  <div className="text-xs text-gray-500">
-                    {bills.filter((b) => b.status === "completed").length} bills
-                  </div>
                 </div>
 
-                <div className="p-4 border border-gray-200">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Cancelled Amount
+                {/* Cancelled */}
+                <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-lg p-4 border border-red-200">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
+                      <XCircle className="h-5 w-5 text-white" />
                     </div>
-                    <XCircle className="h-4 w-4 text-gray-400" />
+                    <div>
+                      <div className="text-sm font-medium text-red-700">Cancelled</div>
+                      <div className="text-xs text-red-600">
+                        {bills.filter((b) => b.status === "cancelled").length} bills
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-2xl font-semibold text-red-600 line-through mb-1">
+                  <div className="text-2xl font-bold text-red-800 line-through">
                     Rs.{calculateTotals().cancelledTotal.toLocaleString()}
                   </div>
-                  <div className="text-xs text-gray-500">
-                    {bills.filter((b) => b.status === "cancelled").length} bills
-                  </div>
                 </div>
 
-                <div className="p-4 bg-gray-900 text-white">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      Total Revenue
+                {/* Total Revenue */}
+                <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg p-4 text-white col-span-2 lg:col-span-1">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                      <Package className="h-5 w-5 text-white" />
                     </div>
-                    <Package className="h-4 w-4 text-gray-300" />
+                    <div>
+                      <div className="text-sm font-medium text-blue-100">Total Revenue</div>
+                      <div className="text-xs text-blue-200">Active bills only</div>
+                    </div>
                   </div>
-                  <div className="text-2xl font-semibold text-white mb-1">
+                  <div className="text-2xl font-bold text-white">
                     Rs.{calculateTotals().grandTotal.toLocaleString()}
-                  </div>
-                  <div className="text-xs text-gray-300">
-                    Combined active revenue
                   </div>
                 </div>
               </div>
 
-              <div className="mt-6 p-4 bg-gray-50 border border-gray-200">
-                <div className="flex items-start gap-4">
-                  <FileText className="h-5 w-5 text-gray-400 mt-0.5" />
+              {/* Quick Stats */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
                   <div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-2">
-                      Revenue Calculation Method
-                    </h4>
-                    <p className="text-xs text-gray-600 leading-relaxed">
-                      Total revenue includes both pending and completed bills.
-                      Cancelled bills are excluded from all revenue calculations
-                      to ensure accurate financial reporting.
-                    </p>
+                    <div className="text-2xl font-bold text-gray-900">{bills.length}</div>
+                    <div className="text-sm text-gray-600">Total Records</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {bills.length > 0 ? Math.round((calculateTotals().grandTotal / bills.length)) : 0}
+                    </div>
+                    <div className="text-sm text-gray-600">Avg. Amount (Rs.)</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {bills.length > 0 ? Math.round(((bills.filter(b => b.status === "completed").length + bills.filter(b => b.status === "pending").length) / bills.length) * 100) : 0}%
+                    </div>
+                    <div className="text-sm text-gray-600">Active Rate</div>
                   </div>
                 </div>
               </div>
