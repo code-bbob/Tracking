@@ -59,8 +59,6 @@ class BillSerializer(serializers.ModelSerializer):
                 else:
                     raise serializers.ValidationError("Invalid status for bill.")
                 barcode.save()
-                print(barcode.status)
-                print("HERE FOR THE FIRST TIME")
             else:
                 raise serializers.ValidationError("Barcode is either not active or already expired.")
         else:
@@ -69,7 +67,6 @@ class BillSerializer(serializers.ModelSerializer):
             print("HERE AS WELL", attr, value)
             setattr(instance, attr, value)
         instance.save()
-        print("DONE",instance.status)
         return instance
     
     def get_issued_by_name(self, obj):

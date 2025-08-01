@@ -63,7 +63,11 @@ class IssueBarcodeView(APIView):
         if role != 'Admin':
             return Response({'error': 'You do not have permission to issue barcodes.'}, status=403)
         
-        count = request.data.get('count', 1)
+        lowerbound = request.data.get('lowerbound')
+        upperbound = request.data.get('upperbound')
+
+        if not lowerbound or not upperbound:
+            return Response({'error': 'Lowerbound and upperbound are required.'}, status=400)
 
         assigned_by = person
         assigned_to_id = request.data.get('assigned_to')
@@ -73,12 +77,14 @@ class IssueBarcodeView(APIView):
             Barcode.objects.values_list('code', flat=True)
         ) 
         new_codes = set()
-
-        while len(new_codes) < count:
-            code = f"{random.randint(100000000000, 999999999999)}"
-            if code not in existing_codes and code not in new_codes:
-                new_codes.add(code)
         
+        # add codes from lowerbound to upperbound to new_codes
+        for code in range(lowerbound, upperbound + 1):
+            code_str = str(code).zfill(6)
+            if code_str not in existing_codes:
+                new_codes.add(code_str)
+        if not new_codes:
+            return Response({'error': 'No new barcodes to issue.'}, status=400)
         barcodes = [
             Barcode(code=code, assigned_to=assigned_to, assigned_by=assigned_by)
             for code in new_codes

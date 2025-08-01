@@ -27,7 +27,8 @@ import useAxios from "./utils/useAxios";
 export default function IssueBarcodes() {
   const api = useAxios();
   const [formData, setFormData] = useState({
-    count: 1,
+    lowerbound: "",
+    upperbound: "",
     assignedTo: "",
   });
   const [users, setUsers] = useState([]);
@@ -121,7 +122,8 @@ export default function IssueBarcodes() {
 
     try {
       const requestData = {
-        count: parseInt(formData.count),
+        lowerbound: parseInt(formData.lowerbound),
+        upperbound: parseInt(formData.upperbound),
         assigned_to: formData.assignedTo,
       };
 
@@ -135,7 +137,8 @@ export default function IssueBarcodes() {
 
       // Reset form
       setFormData({
-        count: 1,
+        lowerbound: "",
+        upperbound: "",
         assignedTo: "",
       });
 
@@ -244,19 +247,35 @@ export default function IssueBarcodes() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Count */}
+              {/* Lowerbound */}
               <div>
                 <Label className="text-sm font-medium text-gray-700">
-                  Number of Barcodes *
+                  Lower Bound *
                 </Label>
                 <Input
-                  name="count"
+                  name="lowerbound"
                   type="number"
-                  value={formData.count}
+                  value={formData.lowerbound}
                   onChange={handleInputChange}
-                  placeholder="Enter quantity (1-100)"
+                  placeholder="Enter starting code number"
                   min="1"
-                  max="100"
+                  className="mt-1 w-full"
+                  required
+                />
+              </div>
+
+              {/* Upperbound */}
+              <div>
+                <Label className="text-sm font-medium text-gray-700">
+                  Upper Bound *
+                </Label>
+                <Input
+                  name="upperbound"
+                  type="number"
+                  value={formData.upperbound}
+                  onChange={handleInputChange}
+                  placeholder="Enter ending code number"
+                  min="1"
                   className="mt-1 w-full"
                   required
                 />
@@ -403,7 +422,7 @@ export default function IssueBarcodes() {
                       1.
                     </span>
                     <span>
-                      Enter the number of barcodes to generate (1-100)
+                      Enter the starting code number (lower bound) and ending code number (upper bound)
                     </span>
                   </div>
                   <div className="flex items-start gap-2">
@@ -416,7 +435,7 @@ export default function IssueBarcodes() {
                     <span className="font-semibold text-blue-600 min-w-[16px]">
                       3.
                     </span>
-                    <span>Click "Issue Barcodes" to generate unique codes</span>
+                    <span>Click "Issue Barcodes" to generate codes in the specified range</span>
                   </div>
                   <div className="flex items-start gap-2">
                     <span className="font-semibold text-blue-600 min-w-[16px]">
@@ -430,8 +449,8 @@ export default function IssueBarcodes() {
 
                 <div className="absolute bottom-6 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <p className="text-sm text-yellow-800">
-                    <strong>Note:</strong> Generated codes are unique and can be
-                    used for shipment tracking.
+                    <strong>Note:</strong> Codes are generated from lower bound to upper bound. Only non-existing codes will be
+                    created.
                   </p>
                 </div>
               </div>
