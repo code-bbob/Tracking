@@ -8,6 +8,7 @@ import IssueBarcodes from './IssueBarcodes';
 import Analytics from './pages/AnalyticsNew';
 import Records from './Records';
 import ProtectedRoute from './redux/protectedRoute';
+import AdminRoute from './components/AdminRoute';
 import AppLayout from './components/AppLayout';
 import { useSelector } from 'react-redux';
 
@@ -31,17 +32,23 @@ function App() {
           } />
           <Route path="/issue-barcodes" element={
             <AppLayout>
-              <IssueBarcodes />
+              <AdminRoute>
+                <IssueBarcodes />
+              </AdminRoute>
             </AppLayout>
           } />
           <Route path="/analytics" element={
             <AppLayout>
-              <Analytics />
+              <AdminRoute>
+                <Analytics />
+              </AdminRoute>
             </AppLayout>
           } />
           <Route path="/records" element={
             <AppLayout>
-              <Records />
+              <AdminRoute>
+                <Records />
+              </AdminRoute>
             </AppLayout>
           } />
           <Route path="/about" element={
