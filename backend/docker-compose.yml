@@ -11,7 +11,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"  # Changed from 5432:5432 to avoid conflict
+      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tracking_user} -d ${POSTGRES_DB:-tracking_db}"]
       interval: 30s
@@ -24,7 +24,7 @@ services:
     build: .
     restart: always
     environment:
-      - DEBUG=True
+      - DEBUG=False
       - POSTGRES_DB=${POSTGRES_DB:-tracking_db}
       - POSTGRES_USER=${POSTGRES_USER:-tracking_user}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-tracking_secure_password}
@@ -33,7 +33,7 @@ services:
       - SECRET_KEY=${SECRET_KEY:-django-insecure-change-this-in-production}
       - EMAIL_USER=${EMAIL_USER}
       - EMAIL_PASS=${EMAIL_PASS}
-      - ALLOWED_HOSTS=*
+      - ALLOWED_HOSTS=api.gunswithroses.com,localhost,127.0.0.1
     volumes:
       - static_volume:/app/static
       - media_volume:/app/media

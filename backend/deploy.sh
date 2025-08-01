@@ -3,6 +3,14 @@
 # Minimal production deployment script for Django Tracking Application
 set -e
 
+echo "Deploying to api.gunswithroses.com..."
+
+# Build and start containers
+docker-compose up -d --build
+
+echo "Deployment complete!"
+echo "Your API is running at https://api.gunswithroses.com"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'

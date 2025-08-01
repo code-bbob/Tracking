@@ -29,7 +29,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-_vl6!9hjbt*i(*7-lsxu$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = ['api.gunswithroses.com', 'localhost', '127.0.0.1']
 
 AUTH_USER_MODEL = 'userauth.User'
 
@@ -196,7 +196,7 @@ EMAIL_USE_TLS = True
 
 CORS_ORIGIN_ALLOW_ALL = True    
 
-CSRF_TRUSTED_ORIGINS = ['https://ez.youthtech.com.np','http://*.127.0.0.1']
+CSRF_TRUSTED_ORIGINS = ['https://api.gunswithroses.com', 'http://localhost', 'http://127.0.0.1']
 
 
 # Trust the X-Forwarded-Proto header so `request.is_secure()` is correct
