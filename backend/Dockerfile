@@ -59,7 +59,9 @@ RUN chmod +x /entrypoint.sh
 RUN chown -R django:django /app /entrypoint.sh
 
 # Create log file with proper permissions
-RUN touch /app/logs/django.log && chown django:django /app/logs/django.log
+RUN touch /app/logs/django.log /app/logs/gunicorn_access.log /app/logs/gunicorn_error.log && \
+    chown django:django /app/logs/*.log && \
+    chmod 664 /app/logs/*.log
 
 # Switch to non-root user
 USER django

@@ -9,6 +9,16 @@ NC='\033[0m' # No Color
 
 echo -e "${GREEN}Starting Django application entrypoint...${NC}"
 
+# Function to setup directories and permissions
+setup_directories() {
+    echo -e "${YELLOW}Setting up directories and permissions...${NC}"
+    
+    # Create directories if they don't exist
+    mkdir -p /app/logs /app/static /app/media
+    
+    echo -e "${GREEN}Directories set up!${NC}"
+}
+
 # Function to wait for database
 wait_for_db() {
     echo -e "${YELLOW}Waiting for database to be ready...${NC}"
@@ -78,6 +88,7 @@ EOF
 case "$1" in
     "gunicorn")
         echo -e "${GREEN}Starting with Gunicorn for production...${NC}"
+        setup_directories
         wait_for_db
         run_django_commands
         
@@ -99,26 +110,31 @@ case "$1" in
         ;;
     "django-dev")
         echo -e "${GREEN}Starting Django development server...${NC}"
+        setup_directories
         wait_for_db
         run_django_commands
         exec python manage.py runserver 0.0.0.0:8000
         ;;
     "shell")
         echo -e "${GREEN}Starting Django shell...${NC}"
+        setup_directories
         wait_for_db
         exec python manage.py shell
         ;;
     "migrate")
         echo -e "${GREEN}Running migrations only...${NC}"
+        setup_directories
         wait_for_db
         exec python manage.py migrate
         ;;
     "collectstatic")
         echo -e "${GREEN}Collecting static files only...${NC}"
+        setup_directories
         exec python manage.py collectstatic --noinput
         ;;
     *)
         echo -e "${YELLOW}Running custom command: $@${NC}"
+        setup_directories
         wait_for_db
         exec "$@"
         ;;
