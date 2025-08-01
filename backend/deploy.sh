@@ -43,8 +43,8 @@ create_directories() {
 # Function to deploy
 deploy() {
     echo -e "${YELLOW}Building and starting services...${NC}"
-    docker-compose build --no-cache
-    docker-compose up -d
+    docker compose build --no-cache
+    docker compose up -d
     echo -e "${GREEN}Services started! Available at: http://localhost${NC}"
     echo -e "${BLUE}Admin: http://localhost/admin/ (admin/admin123)${NC}"
 }
@@ -52,28 +52,28 @@ deploy() {
 # Function to show status
 status() {
     echo -e "${YELLOW}Service Status:${NC}"
-    docker-compose ps
+    docker compose ps
 }
 
 # Function to show logs
 logs() {
     if [ -n "$2" ]; then
-        docker-compose logs -f "$2"
+        docker compose logs -f "$2"
     else
-        docker-compose logs -f
+        docker compose logs -f
     fi
 }
 
 # Function to stop services
 stop() {
     echo -e "${YELLOW}Stopping services...${NC}"
-    docker-compose down
+    docker compose down
     echo -e "${GREEN}Services stopped!${NC}"
 }
 
 # Function to restart services
 restart() {
-    docker-compose restart
+    docker compose restart
     echo -e "${GREEN}Services restarted!${NC}"
 }
 
@@ -85,7 +85,7 @@ manage() {
         exit 1
     fi
     shift
-    docker-compose exec web python manage.py "$@"
+    docker compose exec web python manage.py "$@"
 }
 
 # Function to backup database
@@ -95,7 +95,7 @@ backup() {
     mkdir -p "$BACKUP_DIR"
     
     echo -e "${YELLOW}Creating database backup...${NC}"
-    docker-compose exec db pg_dump -U tracking_user tracking_db > "$BACKUP_DIR/$BACKUP_FILE"
+    docker compose exec db pg_dump -U tracking_user tracking_db > "$BACKUP_DIR/$BACKUP_FILE"
     echo -e "${GREEN}Backup created: $BACKUP_DIR/$BACKUP_FILE${NC}"
 }
 
