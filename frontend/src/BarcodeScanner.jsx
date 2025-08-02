@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { BrowserMultiFormatReader } from '@zxing/library';
+import { BrowserMultiFormatReader, BarcodeFormat, DecodeHintType } from '@zxing/library';
 
 function BarcodeScanner({ onScan, onClose }) {
   const [isScanning, setIsScanning] = useState(false);
@@ -74,7 +74,19 @@ function BarcodeScanner({ onScan, onClose }) {
   // Initialize barcode reader
   useEffect(() => {
     if (isMobile) {
-      codeReader.current = new BrowserMultiFormatReader();
+      // Configure reader specifically for Code 128 and other 1D barcodes
+      const hints = new Map();
+      hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+        BarcodeFormat.CODE_128,
+        BarcodeFormat.CODE_39,
+        BarcodeFormat.EAN_13,
+        BarcodeFormat.EAN_8,
+        BarcodeFormat.UPC_A,
+        BarcodeFormat.UPC_E
+      ]);
+      hints.set(DecodeHintType.TRY_HARDER, true);
+      
+      codeReader.current = new BrowserMultiFormatReader(hints);
     }
     
     return () => {
