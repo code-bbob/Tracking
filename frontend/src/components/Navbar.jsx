@@ -98,7 +98,7 @@ const Navbar = ({
                 </div>
                 <div className="min-w-0 flex-1">
                   <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent truncate">
-                    TruckFlow - {title}
+                    JS-JV - {title}
                   </h1>
                   {subtitle && (
                     <p className="text-xs text-gray-500 -mt-0.5 truncate hidden sm:block font-medium">
