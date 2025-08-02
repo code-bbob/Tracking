@@ -40,7 +40,19 @@ SQL_DUMP_FILE="${DUMP_DIR}/postgres_dump.sql"
 create_backup_dir() {
     print_status "Creating backup directory: ${DUMP_DIR}"
     mkdir -p "${DUMP_DIR}"
-    print_success "Backup directory created"
+    
+    # Ensure the parent backups directory exists and has proper permissions
+    if [ ! -d "/app/backups" ]; then
+        mkdir -p "/app/backups"
+        chmod 755 "/app/backups"
+    fi
+    
+    if [ -d "${DUMP_DIR}" ]; then
+        print_success "Backup directory created"
+    else
+        print_error "Failed to create backup directory"
+        exit 1
+    fi
 }
 
 # Django data dump functions
@@ -124,6 +136,25 @@ print(db_config.get('ENGINE', ''))
 ")
     
     if [[ "$db_engine" == *"postgresql"* ]]; then
+        # Check if pg_dump is available
+        if ! command -v pg_dump &> /dev/null; then
+            print_error "pg_dump command not found. PostgreSQL client tools are not installed."
+            print_warning "Installing PostgreSQL client tools..."
+            
+            # Try to install PostgreSQL client tools
+            if command -v apt-get &> /dev/null; then
+                apt-get update -qq && apt-get install -y -qq postgresql-client
+            elif command -v yum &> /dev/null; then
+                yum install -y postgresql
+            elif command -v apk &> /dev/null; then
+                apk add --no-cache postgresql-client
+            else
+                print_error "Cannot install PostgreSQL client tools automatically."
+                print_warning "Please install pg_dump manually or use Django-only dumps."
+                return 1
+            fi
+        fi
+        
         # Get database configuration from Django settings
         local db_config=$(python -c "
 import os
@@ -134,7 +165,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 django.setup()
 
 db_config = settings.DATABASES.get('default', {})
-print(f\"{db_config.get('NAME', '')};{db_config.get('USER', '')};{db_config.get('HOST', 'localhost')};{db_config.get('PORT', '5432')};{db_config.get('PASSWORD', '')}\"
+print(f\"{db_config.get('NAME', '')};{db_config.get('USER', '')};{db_config.get('HOST', 'localhost')};{db_config.get('PORT', '5432')};{db_config.get('PASSWORD', '')}\")
 ")
         
         IFS=';' read -r DB_NAME DB_USER DB_HOST DB_PORT DB_PASSWORD <<< "$db_config"

@@ -8,9 +8,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install build deps for psycopg2
+# Install build deps for psycopg2 and PostgreSQL client tools
 RUN apt-get update \
- && apt-get install -y --no-install-recommends gcc libpq-dev \
+ && apt-get install -y --no-install-recommends gcc libpq-dev postgresql-client \
  && rm -rf /var/lib/apt/lists/*
 
 # Install Python requirements
