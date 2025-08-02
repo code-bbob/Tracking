@@ -73,26 +73,19 @@ class IssueBarcodeView(APIView):
         assigned_to_id = request.data.get('assigned_to')
         assigned_to = Person.objects.get(user=assigned_to_id)
         # person = Person.objects.get(id=assigned_to_id)
-        existing_codes = set(
-            Barcode.objects.values_list('code', flat=True)
-        ) 
-        new_codes = set()
-        
-        # add codes from lowerbound to upperbound to new_codes
+        existing_codes = set(Barcode.objects.values_list('code', flat=True))
+        # collect new codes in order
+        new_codes_list = []
         for code in range(lowerbound, upperbound + 1):
             code_str = str(code).zfill(6)
             if code_str not in existing_codes:
-                new_codes.add(code_str)
-        if not new_codes:
+                new_codes_list.append(code_str)
+        if not new_codes_list:
             return Response({'error': 'No new barcodes to issue.'}, status=400)
-        barcodes = [
-            Barcode(code=code, assigned_to=assigned_to, assigned_by=assigned_by)
-            for code in new_codes
-        ]
-        Barcode.objects.bulk_create(barcodes)
-
-        return Response(
-            {'issued_codes': list(new_codes)},
-            status=201
-        )
+        issued_codes = []
+        # create barcodes one by one to preserve order
+        for code_str in new_codes_list:
+            Barcode.objects.create(code=code_str, assigned_to=assigned_to, assigned_by=assigned_by)
+            issued_codes.append(code_str)
+        return Response({'issued_codes': issued_codes}, status=201)
 
