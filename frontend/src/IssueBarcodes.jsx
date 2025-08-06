@@ -203,6 +203,14 @@ export default function IssueBarcodes() {
     return `||||| || ||| | |||| ||| |||| | ||| ||||`;
   };
 
+  // categorize barcodes by status for column view
+  const issuedList = existingBarcodes.filter((b) => b.status === "issued");
+  const activeList = existingBarcodes.filter((b) => b.status === "active");
+  const usedList = existingBarcodes.filter((b) => b.status === "used");
+  // pagination metadata for three-column view
+  const pageSize = 3; // must match backend page_size
+  const totalPages = Math.ceil(pagination.count / pageSize);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Simple Navbar - matching Home page */}
@@ -583,117 +591,153 @@ export default function IssueBarcodes() {
               </div>
             ) : existingBarcodes.length > 0 ? (
               <>
-                <div className="space-y-1 max-h-96 overflow-y-auto">
-                  {existingBarcodes.map((barcode, index) => (
-                    <div
-                      key={barcode.code}
-                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 hover:bg-gray-50 rounded border-l-4 border-l-transparent hover:border-l-blue-500 transition-all gap-2"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                        <span className="font-mono text-sm font-medium text-gray-900 break-all">
-                          {barcode.code}
-                        </span>
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm text-gray-600">
-                          <span className="flex items-center gap-1">
-                            assigned to{" "}
-                            <span className="font-medium truncate">
-                              {barcode.assigned_to.name}
+                {/* three-column status view */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto lg:divide-x lg:divide-gray-200">
+                  {/* Issued column */}
+                  <div>
+                    <h3 className="text-md font-bold text-indigo-600 mb-3 uppercase tracking-wide">
+                      Issued ({issuedList.length})
+                    </h3>
+                    {issuedList.map((barcode) => (
+                      <div
+                        key={barcode.code}
+                        className="flex items-center p-3 hover:bg-gray-50 rounded border-l-4 border-l-transparent hover:border-l-blue-500 transition-all"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                          <span className="font-mono text-sm font-medium text-gray-900 break-all">
+                            {barcode.code}
+                          </span>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm text-gray-600">
+                            <span className="flex items-center gap-1">
+                              assigned to{" "}
+                              <span className="font-medium truncate">
+                                {barcode.assigned_to.name}
+                              </span>
                             </span>
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            on{" "}
-                            {new Date(barcode.created_at).toLocaleDateString()}
-                          </span>
+                            <span className="text-xs text-gray-400">
+                              on{" "}
+                              {new Date(barcode.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            barcode.status === "issued"
-                              ? "bg-blue-100 text-blue-800"
-                              : barcode.status === "active"
-                              ? "bg-green-100 text-green-800"
-                              : barcode.status === "used"
-                              ? "bg-gray-100 text-gray-800"
-                              : barcode.status === "cancelled"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {barcode.status === "issued"
-                            ? "📋 Issued"
-                            : barcode.status === "active"
-                            ? "🟢 Active"
-                            : barcode.status === "used"
-                            ? "✅ Used"
-                            : barcode.status === "cancelled"
-                            ? "❌ Cancelled"
-                            : barcode.status}
-                        </span>
-                        <Button
+                        <button
                           onClick={() => copyToClipboard(barcode.code)}
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 hover:bg-gray-200 flex-shrink-0"
+                          className="p-1 ml-2 hover:bg-gray-200 rounded"
                         >
                           {copiedCode === barcode.code ? (
                             <CheckCircle className="h-4 w-4 text-green-600" />
                           ) : (
                             <Copy className="h-4 w-4 text-gray-500" />
                           )}
-                        </Button>
+                        </button>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                  {/* Active column */}
+                  <div>
+                    <h3 className="text-md font-bold text-indigo-600 mb-3 uppercase tracking-wide">
+                      Active ({activeList.length})
+                    </h3>
+                    {activeList.map((barcode) => (
+                      <div
+                        key={barcode.code}
+                        className="flex items-center p-3 hover:bg-gray-50 rounded border-l-4 border-l-transparent hover:border-l-blue-500 transition-all"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                          <span className="font-mono text-sm font-medium text-gray-900 break-all">
+                            {barcode.code}
+                          </span>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm text-gray-600">
+                            <span className="flex items-center gap-1">
+                              assigned to{" "}
+                              <span className="font-medium truncate">
+                                {barcode.assigned_to.name}
+                              </span>
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              on{" "}
+                              {new Date(barcode.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => copyToClipboard(barcode.code)}
+                          className="p-1 ml-2 hover:bg-gray-200 rounded"
+                        >
+                          {copiedCode === barcode.code ? (
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <Copy className="h-4 w-4 text-gray-500" />
+                          )}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Used column */}
+                  <div>
+                    <h3 className="text-md font-bold text-indigo-600 mb-3 uppercase tracking-wide">
+                      Used ({usedList.length})
+                    </h3>
+                    {usedList.map((barcode) => (
+                      <div
+                        key={barcode.code}
+                        className="flex items-center p-3 hover:bg-gray-50 rounded border-l-4 border-l-transparent hover:border-l-blue-500 transition-all"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                          <span className="font-mono text-sm font-medium text-gray-900 break-all">
+                            {barcode.code}
+                          </span>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm text-gray-600">
+                            <span className="flex items-center gap-1">
+                              assigned to{" "}
+                              <span className="font-medium truncate">
+                                {barcode.assigned_to.name}
+                              </span>
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              on{" "}
+                              {new Date(barcode.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => copyToClipboard(barcode.code)}
+                          className="p-1 ml-2 hover:bg-gray-200 rounded"
+                        >
+                          {copiedCode === barcode.code ? (
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <Copy className="h-4 w-4 text-gray-500" />
+                          )}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-
-                {/* Pagination Controls */}
-                {pagination.count > 20 && (
-                  <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div className="text-sm text-gray-500 text-center sm:text-left">
-                      Showing {(pagination.currentPage - 1) * 20 + 1} to{" "}
-                      {Math.min(pagination.currentPage * 20, pagination.count)}{" "}
-                      of {pagination.count} results
-                    </div>
-                    <div className="flex items-center justify-center gap-2">
-                      <Button
-                        onClick={() =>
-                          fetchExistingBarcodes(
-                            pagination.currentPage - 1,
-                            filterUser,
-                            searchQuery
-                          )
-                        }
-                        variant="outline"
-                        size="sm"
-                        disabled={!pagination.previous}
-                        className="flex items-center gap-1"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                        <span className="hidden sm:inline">Previous</span>
-                        <span className="sm:hidden">Prev</span>
-                      </Button>
-                      <span className="text-sm text-gray-600 px-2 sm:px-3 whitespace-nowrap">
-                        Page {pagination.currentPage}
-                      </span>
-                      <Button
-                        onClick={() =>
-                          fetchExistingBarcodes(
-                            pagination.currentPage + 1,
-                            filterUser,
-                            searchQuery
-                          )
-                        }
-                        variant="outline"
-                        size="sm"
-                        disabled={!pagination.next}
-                        className="flex items-center gap-1"
-                      >
-                        <span className="hidden sm:inline">Next</span>
-                        <span className="sm:hidden">Next</span>
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
+                {/* pagination controls */}
+                {(pagination.previous || pagination.next) && (
+                  <div className="mt-4 flex items-center justify-center gap-4">
+                    <Button
+                      onClick={() => fetchExistingBarcodes(pagination.currentPage - 1, filterUser, searchQuery)}
+                      variant="outline"
+                      size="sm"
+                      disabled={!pagination.previous}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      <span className="ml-1">Prev</span>
+                    </Button>
+                    <span className="text-sm text-gray-600">
+                      Page {pagination.currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      onClick={() => fetchExistingBarcodes(pagination.currentPage + 1, filterUser, searchQuery)}
+                      variant="outline"
+                      size="sm"
+                      disabled={!pagination.next}
+                    >
+                      <span className="mr-1">Next</span>
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
                   </div>
                 )}
               </>

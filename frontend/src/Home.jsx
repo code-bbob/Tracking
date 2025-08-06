@@ -53,6 +53,8 @@ export default function Home() {
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [cancellingTruck, setCancellingTruck] = useState(null)
   const [isCancelling, setIsCancelling] = useState(false)
+  const [isCompleting, setIsCompleting] = useState(false)
+  const [showCompleteDialog, setShowCompleteDialog] = useState(false)
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
@@ -357,6 +359,25 @@ export default function Home() {
       console.error("Error cancelling shipment:", error)
     } finally {
       setIsCancelling(false)
+    }
+  }
+
+  const handleCompleteShipment = async () => {
+    if (!selectedTruck) return
+    setIsCompleting(true)
+    try {
+      await api.patch(`/bills/bills/${selectedTruck.id}/`, {
+        status: "completed",
+        code: selectedTruck.billNumber
+      })
+      // Refresh data after completion
+      await fetchActiveShipments()
+      await fetchCompletedShipments(1)
+      setSelectedTruck(null)
+    } catch (error) {
+      console.error("Error completing shipment:", error)
+    } finally {
+      setIsCompleting(false)
     }
   }
 
@@ -733,7 +754,65 @@ export default function Home() {
 
             {/* Compact Footer Actions */}
             {userRole === "Admin" && selectedTruck.status === "pending" && (
-              <div className="border-t border-gray-200 p-3">
+              <div className="border-t border-gray-200 p-3 flex flex-col gap-2">
+                <Dialog open={showCompleteDialog} onOpenChange={setShowCompleteDialog}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowCompleteDialog(true)}
+                      disabled={isCompleting}
+                      className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      {isCompleting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                          Completing...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4" />
+                          Complete Shipment
+                        </>
+                      )}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2 text-green-600">
+                        <CheckCircle className="h-5 w-5" />
+                        Complete Shipment
+                      </DialogTitle>
+                      <DialogDescription className="pt-2">
+                        Are you sure you want to complete this shipment? This action cannot be undone.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowCompleteDialog(false)}
+                        disabled={isCompleting}
+                      >
+                        Keep
+                      </Button>
+                      <Button
+                        
+                        onClick={() => { setShowCompleteDialog(false); handleCompleteShipment(); }}
+                        disabled={isCompleting}
+                        className="flex items-center bg-green-600 gap-2"
+                      >
+                        {isCompleting ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                        ) : (
+                          <>
+                            <CheckCircle className="h-4 w-4" />
+                            Complete
+                          </>
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
                 <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
                   <DialogTrigger asChild>
                     <Button 
