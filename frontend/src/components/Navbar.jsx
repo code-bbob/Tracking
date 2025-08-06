@@ -180,14 +180,14 @@ const Navbar = ({
             {/* Enhanced User Menu */}
             <div className="flex items-center gap-2 ml-2 pl-3 border-l border-gray-200/60">
               {/* Notifications - Desktop only */}
-              <Button 
+              {/* <Button 
                 size="sm" 
                 variant="ghost" 
                 className="p-2 hover:bg-blue-50/80 hover:text-blue-600 rounded-xl transition-all duration-200 hidden md:flex relative hover:shadow-sm"
               >
                 <Bell className="h-4 w-4" />
                 <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-500 rounded-full animate-pulse shadow-sm"></span>
-              </Button>
+              </Button> */}
               
               {/* Settings - Desktop only */}
               <Button 

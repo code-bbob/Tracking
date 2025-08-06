@@ -300,7 +300,7 @@ export default function Home() {
           ${overdue ? "bg-red-50 border-red-200": local ? "bg-yellow-200 border-yellow-200" : "bg-white border-gray-200"}`}
         onClick={()=>handleTruckClick(truck)}
       >
-        <div className="flex justify-between items-start mb-2">
+        <div className="flex justify-between items-start">
           <div className="font-semibold text-sm sm:text-base">{truck.vehicleNumber}</div>
           <div className="flex text-xs justify-between items-center">
             <span className="truncate flex-1 mr-2">{truck.cargo} - </span>
@@ -308,13 +308,13 @@ export default function Home() {
           </div>
           {truck.status === 'completed' && (
             <div>
-            <div className="text-xs">Checked by:</div>
+            {/* <div className="text-xs">Checked by:</div> */}
             <div className="ml-2 px-2 py-1 rounded-full text-xs font-medium">{truck.modified_by_name}</div>
             </div>
           )}
            {truck.status === 'pending' && (
             <div>
-            <div className="text-xs">Issued by:</div>
+            {/* <div className="text-xs">Issued by:</div> */}
             <div className="ml-2 px-2 py-1 rounded-full text-xs font-medium">{truck.issued_by_name}</div>
             </div>
           )}
@@ -378,7 +378,7 @@ export default function Home() {
             {/* Desktop Layout - 2 columns for Active and Completed, then Cancelled below */}
             <div className="hidden lg:block space-y-4">
               {/* Top row: Active and Completed side by side */}
-              <div className="grid grid-cols-2 gap-4 h-[calc(85vh-40px)]">
+              <div className="grid grid-cols-2 gap-4 h-[110vh]">
                 {/* Active */}
                 <div className="flex flex-col overflow-hidden bg-white rounded-lg shadow-sm border h-full">
                   <div className="flex items-center justify-between p-3 border-b bg-blue-100 rounded-t-lg">
@@ -388,7 +388,7 @@ export default function Home() {
                     <span className="text-sm text-gray-500">{activeCount} bills</span>
                   </div>
                   <div className="flex-1 overflow-hidden p-3">
-                    <div className="h-full overflow-y-auto space-y-2 pr-2">
+                    <div className="h-full overflow-y-auto space-y-1 pr-2">
                       {activeShipments.length === 0 ? (
                         <p className="text-center text-gray-500 py-8">No active shipments</p>
                       ) : (
@@ -411,7 +411,7 @@ export default function Home() {
                   <div className="flex-1 overflow-hidden">
                     <div className="h-full flex flex-col">
                       <div className="flex-1 overflow-y-auto p-3">
-                        <div className="space-y-2 pr-2">
+                        <div className="space-y-1 pr-2">
                           {isLoadingCompleted ? (
                             <div className="flex justify-center py-8">
                               <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
@@ -441,7 +441,7 @@ export default function Home() {
               </div>
 
               {/* Bottom row: Cancelled full width */}
-              <div className="flex flex-col bg-white rounded-lg w-[calc(50vw-25px)] shadow-sm border overflow-hidden h-[calc(100vh-40px)]">
+              <div className="flex flex-col bg-white rounded-lg w-full shadow-sm border overflow-hidden h-[calc(100vh-40px)]">
                 <div className="flex items-center justify-between p-3 border-b bg-red-100 rounded-t-lg">
                   <h2 className="flex items-center gap-2 font-semibold">
                     <XCircle className="h-5 w-5 text-red-600"/> Cancelled Shipments
