@@ -32,7 +32,7 @@ class IssueBarcodeView(APIView):
         
         # Apply pagination
         paginator = PageNumberPagination()
-        paginator.page_size = 20  # You can adjust this
+        paginator.page_size = 100  # You can adjust this
         paginated_barcodes = paginator.paginate_queryset(queryset, request)
         
         barcode_data = []
