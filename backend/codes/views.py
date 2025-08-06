@@ -18,7 +18,7 @@ class IssueBarcodeView(APIView):
         
         # Start with base queryset
         queryset = Barcode.objects.filter(
-        ).select_related('assigned_to', 'assigned_by').order_by('-created_at')
+        ).select_related('assigned_to', 'assigned_by').order_by('code')
         
         # Filter by assigned_to if provided
         assigned_to_filter = request.GET.get('assigned_to')
@@ -29,6 +29,10 @@ class IssueBarcodeView(APIView):
         search_query = request.GET.get('search')
         if search_query:
             queryset = queryset.filter(code__icontains=search_query)
+        # Filter by status if provided
+        status_filter = request.GET.get('status')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
         
         # Apply pagination
         paginator = PageNumberPagination()

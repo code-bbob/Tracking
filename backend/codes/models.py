@@ -20,6 +20,13 @@ class Barcode(models.Model):
     associated_bill = models.ForeignKey('bills.Bill', on_delete=models.CASCADE, related_name='barcodes', null=True, blank=True)
     def __str__(self):
         return f"Code: {self.code}, Status: {self.status}"
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['status']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['code']),
+        ]
 
 
 # class Assignment(models.Model):
