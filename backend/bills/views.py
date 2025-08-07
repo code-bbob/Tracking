@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView 
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
-from django.db.models import Q
+from django.db.models import Q, Sum
 from .models import Bill
 from codes.models import Barcode
 from .serializers import BillSerializer
@@ -203,17 +203,42 @@ class BillView(APIView):
         if amount_to:
             queryset = queryset.filter(amount__lte=amount_to)
         
-        # Apply pagination
-        paginator = PageNumberPagination()
-        paginator.page_size = 50  # Adjust as needed
-        paginated_bills = paginator.paginate_queryset(queryset, request)
-        
-        if paginated_bills is not None:
-            serializer = BillSerializer(paginated_bills, many=True)
-            return paginator.get_paginated_response(serializer.data)
-        
+        # Return all results without pagination, including totals
         serializer = BillSerializer(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        # Calculate totals
+        pending_total = queryset.filter(status='pending').aggregate(
+            total=Sum('amount')
+        )['total'] or 0
+        
+        completed_total = queryset.filter(status='completed').aggregate(
+            total=Sum('amount')
+        )['total'] or 0
+        
+        cancelled_total = queryset.filter(status='cancelled').aggregate(
+            total=Sum('amount')
+        )['total'] or 0
+        
+        grand_total = pending_total + completed_total
+        
+        # Count by status
+        status_counts = {
+            'pending': queryset.filter(status='pending').count(),
+            'completed': queryset.filter(status='completed').count(),
+            'cancelled': queryset.filter(status='cancelled').count(),
+        }
+        
+        return Response({
+            'results': serializer.data,
+            'count': queryset.count(),
+            'totals': {
+                'pending_total': pending_total,
+                'completed_total': completed_total,
+                'cancelled_total': cancelled_total,
+                'grand_total': grand_total,
+            },
+            'status_counts': status_counts,
+        }, status=status.HTTP_200_OK)
 
     def post(self, request):
         person = request.user.person

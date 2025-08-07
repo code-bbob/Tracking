@@ -31,14 +31,24 @@ export default function Records() {
   const [bills, setBills] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedBill, setSelectedBill] = useState(null);
-  const [pagination, setPagination] = useState({
-    count: 0,
-    next: null,
-    previous: null,
+  const [backendTotals, setBackendTotals] = useState({
+    pending_total: 0,
+    completed_total: 0,
+    cancelled_total: 0,
+    grand_total: 0,
   });
-  const [currentPage, setCurrentPage] = useState(1);
+  const [statusCounts, setStatusCounts] = useState({
+    pending: 0,
+    completed: 0,
+    cancelled: 0,
+  });
+  // Get today's date in YYYY-MM-DD format
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
 
-  // Filter states
+  // Filter states - default to today's records
   const [filters, setFilters] = useState({
     search: "",
     status: "",
@@ -47,8 +57,8 @@ export default function Records() {
     vehicleSize: "",
     issuedBy: "",
     modifiedBy: "",
-    dateIssuedFrom: "",
-    dateIssuedTo: "",
+    dateIssuedFrom: getTodayDate(),
+    dateIssuedTo: getTodayDate(),
     dateModifiedFrom: "",
     dateModifiedTo: "",
     amountFrom: "",
@@ -63,8 +73,8 @@ export default function Records() {
     vehicleSize: "",
     issuedBy: "",
     modifiedBy: "",
-    dateIssuedFrom: "",
-    dateIssuedTo: "",
+    dateIssuedFrom: getTodayDate(),
+    dateIssuedTo: getTodayDate(),
     dateModifiedFrom: "",
     dateModifiedTo: "",
     amountFrom: "",
@@ -96,14 +106,13 @@ export default function Records() {
     { value: "Other", label: "Other" },
   ];
 
-  const fetchBills = async (page = 1) => {
+  const fetchBills = async () => {
     try {
       setIsLoading(true);
       console.log("Fetching bills from API...");
 
-      // Build query parameters using appliedFilters instead of filters
+      // Build query parameters using appliedFilters
       const queryParams = new URLSearchParams();
-      if (page > 1) queryParams.append("page", page);
 
       Object.entries(appliedFilters).forEach(([key, value]) => {
         if (value) {
@@ -132,7 +141,7 @@ export default function Records() {
 
       const data = response.data;
 
-      // Handle paginated response structure
+      // Handle response structure (with or without pagination)
       const billsData = data.results || data;
       const isArray = Array.isArray(billsData);
 
@@ -154,11 +163,22 @@ export default function Records() {
       }));
 
       setBills(convertedBills);
-      setPagination({
-        count: data.count || billsData.length,
-        next: data.next,
-        previous: data.previous,
-      });
+      
+      // Set backend totals if available
+      if (data.totals) {
+        console.log("Backend totals received:", data.totals);
+        setBackendTotals(data.totals);
+      } else {
+        console.log("No backend totals received, using frontend calculation");
+      }
+      
+      // Set status counts if available
+      if (data.status_counts) {
+        console.log("Backend status counts received:", data.status_counts);
+        setStatusCounts(data.status_counts);
+      } else {
+        console.log("No backend status counts received, using frontend calculation");
+      }
     } catch (error) {
       console.error("Error fetching bills:", error);
       console.error("Error response:", error.response);
@@ -176,15 +196,25 @@ export default function Records() {
 
       // Set empty state on error
       setBills([]);
-      setPagination({ count: 0, next: null, previous: null });
+      setBackendTotals({
+        pending_total: 0,
+        completed_total: 0,
+        cancelled_total: 0,
+        grand_total: 0,
+      });
+      setStatusCounts({
+        pending: 0,
+        completed: 0,
+        cancelled: 0,
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchBills(currentPage);
-  }, [appliedFilters, currentPage]);
+    fetchBills();
+  }, [appliedFilters]);
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -192,7 +222,7 @@ export default function Records() {
 
   const applyFilters = () => {
     setAppliedFilters(filters);
-    setCurrentPage(1);
+    setShowFilters(false); // Hide filters when applying
   };
 
   const clearFilters = () => {
@@ -204,8 +234,8 @@ export default function Records() {
       vehicleSize: "",
       issuedBy: "",
       modifiedBy: "",
-      dateIssuedFrom: "",
-      dateIssuedTo: "",
+      dateIssuedFrom: getTodayDate(),
+      dateIssuedTo: getTodayDate(),
       dateModifiedFrom: "",
       dateModifiedTo: "",
       amountFrom: "",
@@ -213,7 +243,7 @@ export default function Records() {
     };
     setFilters(emptyFilters);
     setAppliedFilters(emptyFilters);
-    setCurrentPage(1);
+    setShowFilters(false); // Hide filters when resetting
   };
 
   const formatDateTime = (dateTime) => {
@@ -303,8 +333,27 @@ export default function Records() {
     window.URL.revokeObjectURL(url);
   };
 
-  // Calculate total amounts (excluding cancelled bills)
+  // Calculate total amounts (use backend totals if available, otherwise calculate from frontend)
   const calculateTotals = () => {
+    // Check if we have valid backend totals (all required fields exist and are numbers)
+    const hasValidBackendTotals = backendTotals && 
+      typeof backendTotals.pending_total === 'number' && 
+      typeof backendTotals.completed_total === 'number' && 
+      typeof backendTotals.cancelled_total === 'number' && 
+      typeof backendTotals.grand_total === 'number';
+
+    if (hasValidBackendTotals) {
+      console.log('Using backend totals:', backendTotals);
+      return {
+        pendingTotal: backendTotals.pending_total || 0,
+        completedTotal: backendTotals.completed_total || 0,
+        cancelledTotal: backendTotals.cancelled_total || 0,
+        grandTotal: backendTotals.grand_total || 0,
+      };
+    }
+    
+    // Fallback: calculate from frontend data
+    console.log('Using frontend calculation fallback');
     const pendingTotal = bills
       .filter((bill) => bill.status === "pending")
       .reduce((sum, bill) => sum + (bill.amount || 0), 0);
@@ -480,7 +529,7 @@ export default function Records() {
                       Records Management
                     </h1>
                     <p className="text-sm text-gray-500">
-                      Track and manage all bill records
+                      Showing today's records by default - use date filters to view other periods
                     </p>
                   </div>
                 </div>
@@ -495,11 +544,9 @@ export default function Records() {
                       <span className="font-medium text-gray-900">
                         {bills.length}
                       </span>{" "}
-                      of{" "}
-                      <span className="font-medium text-gray-900">
-                        {pagination.count}
-                      </span>{" "}
-                      records
+                      {appliedFilters.dateIssuedFrom === getTodayDate() && appliedFilters.dateIssuedTo === getTodayDate() 
+                        ? "records for today" 
+                        : "filtered records"}
                     </span>
                   </div>
 
@@ -566,12 +613,26 @@ export default function Records() {
                   </Button>
                 </div>
               </div>
+              <div className="mt-2 flex items-center gap-2 text-sm">
+                <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+                <span className="text-blue-700">
+                  {appliedFilters.dateIssuedFrom === getTodayDate() && appliedFilters.dateIssuedTo === getTodayDate() 
+                    ? `Showing today's records (${getTodayDate()})` 
+                    : `Custom date filter applied`}
+                </span>
+              </div>
             </div>
 
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 applyFilters();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  applyFilters();
+                }
               }}
               className="p-6"
             >
@@ -678,6 +739,9 @@ export default function Records() {
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Issue Date From
+                    {filters.dateIssuedFrom === getTodayDate() && (
+                      <span className="ml-1 text-xs text-blue-600 font-medium">(Today)</span>
+                    )}
                   </label>
                   <input
                     type="date"
@@ -685,7 +749,11 @@ export default function Records() {
                     onChange={(e) =>
                       handleFilterChange("dateIssuedFrom", e.target.value)
                     }
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-400"
+                    className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all ${
+                      filters.dateIssuedFrom === getTodayDate() 
+                        ? 'border-blue-300 bg-blue-50 hover:border-blue-400' 
+                        : 'border-gray-300 bg-white hover:border-gray-400'
+                    }`}
                   />
                 </div>
 
@@ -693,6 +761,9 @@ export default function Records() {
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">
                     Issue Date To
+                    {filters.dateIssuedTo === getTodayDate() && (
+                      <span className="ml-1 text-xs text-blue-600 font-medium">(Today)</span>
+                    )}
                   </label>
                   <input
                     type="date"
@@ -700,7 +771,11 @@ export default function Records() {
                     onChange={(e) =>
                       handleFilterChange("dateIssuedTo", e.target.value)
                     }
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-gray-400"
+                    className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all ${
+                      filters.dateIssuedTo === getTodayDate() 
+                        ? 'border-blue-300 bg-blue-50 hover:border-blue-400' 
+                        : 'border-gray-300 bg-white hover:border-gray-400'
+                    }`}
                   />
                 </div>
 
@@ -803,7 +878,7 @@ export default function Records() {
               <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200 bg-gray-50 -mx-6 px-6 py-4">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
-                  <span>Use filters to narrow down your search results</span>
+                  <span>Change dates to view other periods, or clear other filters to show all records for the selected date range</span>
                 </div>
 
                 <div className="flex gap-3">
@@ -813,7 +888,7 @@ export default function Records() {
                     onClick={clearFilters}
                     className="border-gray-300 text-gray-700 hover:bg-white hover:border-gray-400 px-6 py-2.5 text-sm font-medium transition-all"
                   >
-                    Reset Filters
+                    Reset All Filters
                   </Button>
                   <Button
                     type="submit"
@@ -850,18 +925,21 @@ export default function Records() {
                 <FileText className="h-10 w-10 text-blue-400" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                No Records Found
+                {appliedFilters.dateIssuedFrom === getTodayDate() && appliedFilters.dateIssuedTo === getTodayDate() 
+                  ? "No Records Found for Today" 
+                  : "No Records Found"}
               </h3>
               <p className="text-gray-500 max-w-md mx-auto mb-6">
-                No bills match your current search criteria. Try adjusting your
-                filters or search terms.
+                {appliedFilters.dateIssuedFrom === getTodayDate() && appliedFilters.dateIssuedTo === getTodayDate() 
+                  ? "No bills were issued today. You can view records from other dates by changing the date filters above." 
+                  : "No bills match your current search criteria. Try adjusting your filters or search terms."}
               </p>
               <Button
                 onClick={clearFilters}
                 variant="outline"
                 className="px-6 py-2.5 border-blue-300 text-blue-600 hover:bg-blue-50"
               >
-                Clear All Filters
+                Reset All Filters
               </Button>
             </div>
           ) : (
@@ -1062,7 +1140,9 @@ export default function Records() {
                     <div>
                       <div className="text-sm font-medium text-yellow-700">Pending</div>
                       <div className="text-xs text-yellow-600">
-                        {bills.filter((b) => b.status === "pending").length} bills
+                        {(statusCounts && typeof statusCounts.pending === 'number') 
+                          ? statusCounts.pending 
+                          : bills.filter((b) => b.status === "pending").length} bills
                       </div>
                     </div>
                   </div>
@@ -1080,7 +1160,9 @@ export default function Records() {
                     <div>
                       <div className="text-sm font-medium text-green-700">Completed</div>
                       <div className="text-xs text-green-600">
-                        {bills.filter((b) => b.status === "completed").length} bills
+                        {(statusCounts && typeof statusCounts.completed === 'number') 
+                          ? statusCounts.completed 
+                          : bills.filter((b) => b.status === "completed").length} bills
                       </div>
                     </div>
                   </div>
@@ -1098,7 +1180,9 @@ export default function Records() {
                     <div>
                       <div className="text-sm font-medium text-red-700">Cancelled</div>
                       <div className="text-xs text-red-600">
-                        {bills.filter((b) => b.status === "cancelled").length} bills
+                        {(statusCounts && typeof statusCounts.cancelled === 'number') 
+                          ? statusCounts.cancelled 
+                          : bills.filter((b) => b.status === "cancelled").length} bills
                       </div>
                     </div>
                   </div>
@@ -1122,68 +1206,6 @@ export default function Records() {
                     Rs.{calculateTotals().grandTotal.toLocaleString()}
                   </div>
                 </div>
-              </div>
-
-              {/* Quick Stats */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-                  <div>
-                    <div className="text-2xl font-bold text-gray-900">{bills.length}</div>
-                    <div className="text-sm text-gray-600">Total Records</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-gray-900">
-                      {bills.length > 0 ? Math.round((calculateTotals().grandTotal / bills.length)) : 0}
-                    </div>
-                    <div className="text-sm text-gray-600">Avg. Amount (Rs.)</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-gray-900">
-                      {bills.length > 0 ? Math.round(((bills.filter(b => b.status === "completed").length + bills.filter(b => b.status === "pending").length) / bills.length) * 100) : 0}%
-                    </div>
-                    <div className="text-sm text-gray-600">Active Rate</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Pagination */}
-        {pagination.count > 50 && (
-          <div className="bg-white border border-gray-200 px-6 py-4">
-            <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
-              <div className="flex items-center gap-4">
-                <div className="text-sm text-gray-600">
-                  Page {currentPage} of {Math.ceil(pagination.count / 50)}
-                </div>
-                <div className="h-4 w-px bg-gray-300"></div>
-                <div className="text-sm text-gray-500">
-                  {pagination.count} total records
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(1, prev - 1))
-                  }
-                  disabled={!pagination.previous || isLoading}
-                  className="px-4 py-2 border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  ← Previous
-                </Button>
-                <div className="px-3 py-2 bg-gray-900 text-white text-sm font-medium">
-                  {currentPage}
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentPage((prev) => prev + 1)}
-                  disabled={!pagination.next || isLoading}
-                  className="px-4 py-2 border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next →
-                </Button>
               </div>
             </div>
           </div>
