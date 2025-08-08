@@ -4,8 +4,16 @@ import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 function BarcodeScanner({ onScan, onClose }) {
   const [manualInput, setManualInput] = useState('');
   const [error, setError] = useState('');
+  const [shouldAutoFocus, setShouldAutoFocus] = useState(false);
 
   useEffect(() => {
+    // Check if device is laptop/desktop (not mobile/tablet)
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    
+    // Auto-focus only on non-mobile devices without touch capability (laptops/desktops)
+    setShouldAutoFocus(!isMobile && !hasTouch);
+
     // initialize html5-qrcode scanner with back camera and permission prompt
     const config = {
       fps: 10,
@@ -47,11 +55,13 @@ function BarcodeScanner({ onScan, onClose }) {
         <div className="border-t pt-4">
           <form onSubmit={handleManualSubmit} className="flex flex-col gap-2">
             <input
+              id="barcode-manual-input"
               type="text"
               value={manualInput}
               onChange={e => setManualInput(e.target.value)}
               placeholder="Enter barcode manually"
               className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+              autoFocus={shouldAutoFocus}
             />
             <button
               type="submit"
