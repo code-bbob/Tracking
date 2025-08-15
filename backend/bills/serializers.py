@@ -34,8 +34,8 @@ class BillSerializer(serializers.ModelSerializer):
         barcode.save()
         if bill.region == 'local':
             bill.status = 'completed'
-            bill.completed_by = bill.issued_by
-            bill.completed_at = timezone.now()
+            bill.modified_by = bill.issued_by
+            bill.modified_date = timezone.now()
             barcode.status = 'used'
             barcode.save()
             bill.save()

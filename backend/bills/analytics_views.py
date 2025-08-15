@@ -25,88 +25,85 @@ def analytics_overview(request):
         days = int(request.GET.get('days', 30))
         end_date = timezone.now()
         start_date = end_date - timedelta(days=days)
-        
-        # Get user's enterprise for filtering
-        # Filter bills by user's enterprise and date range
-        bills_queryset = Bill.objects.filter(
+
+        # Base queryset for the period (exclude cancelled as per new requirement)
+        period_queryset = Bill.objects.filter(
             date_issued__range=[start_date, end_date]
         )
-        
-        # Summary statistics
+
+        # Exclude cancelled everywhere for revenue / core metrics
+        bills_queryset = period_queryset.exclude(status='cancelled')
+
+        # Keep cancelled count separately (frontend expects the field, but it is not added to totals)
+        cancelled_bills = period_queryset.filter(status='cancelled').count()
+
+        # Summary statistics (cancelled excluded from total_bills & revenue)
         total_bills = bills_queryset.count()
         completed_bills = bills_queryset.filter(status='completed').count()
         pending_bills = bills_queryset.filter(status='pending').count()
-        cancelled_bills = bills_queryset.filter(status='cancelled').count()
-        
-        # Calculate overdue bills (pending bills past ETA)
+
+        # Overdue pending bills (exclude cancelled by definition already)
         overdue_bills = bills_queryset.filter(
             status='pending',
             eta__lt=timezone.now()
         ).count()
-        
-        # Revenue calculations
-        total_revenue = bills_queryset.aggregate(
-            total=Sum('amount')
-        )['total'] or 0
-        
-        completed_revenue = bills_queryset.filter(
-            status='completed'
-        ).aggregate(
-            total=Sum('amount')
-        )['total'] or 0
-        
-        # Calculate completion rate
+
+        # Revenue (cancelled excluded)
+        total_revenue = bills_queryset.aggregate(total=Sum('amount'))['total'] or 0
+        completed_revenue = bills_queryset.filter(status='completed').aggregate(total=Sum('amount'))['total'] or 0
+
+        # Completion rate
         completion_rate = (completed_bills / total_bills * 100) if total_bills > 0 else 0
-        
-        # Average bill value
-        avg_bill_value = bills_queryset.aggregate(
-            avg=Avg('amount')
-        )['avg'] or 0
-        
-        # Growth rate calculation (compare with previous period)
+
+        # Average bill value (exclude cancelled)
+        avg_bill_value = bills_queryset.aggregate(avg=Avg('amount'))['avg'] or 0
+
+        # Growth rate vs previous period (cancelled excluded in both periods)
         prev_start_date = start_date - timedelta(days=days)
         prev_bills_count = Bill.objects.filter(
             date_issued__range=[prev_start_date, start_date]
-        ).count()
-        
+        ).exclude(status='cancelled').count()
         growth_rate = 0
         if prev_bills_count > 0:
             growth_rate = ((total_bills - prev_bills_count) / prev_bills_count) * 100
-        
-        # Daily trends
-        daily_trends = bills_queryset.extra(
-            select={'date': 'DATE(date_issued)'}
-        ).values('date').annotate(
+
+        # Daily trends (timezone-aware, exclude cancelled)
+        # Use TruncDate with project timezone to avoid UTC shifting issues.
+        from django.db.models.functions import TruncDate
+        current_tz = timezone.get_current_timezone()
+        daily_trends = bills_queryset.annotate(
+            local_date=TruncDate('date_issued', tzinfo=current_tz)
+        ).values('local_date').annotate(
             bills_count=Count('id'),
             revenue=Sum('amount'),
             completed_count=Count('id', filter=Q(status='completed'))
-        ).order_by('date')
-        
-        # Material distribution
+        ).order_by('local_date')
+
+        # Material distribution (exclude cancelled)
         material_distribution = bills_queryset.values('material').annotate(
             count=Count('id'),
             revenue=Sum('amount')
         ).order_by('-count')
-        
-        # Regional distribution
+
+        # Regional distribution (exclude cancelled)
         regional_distribution = bills_queryset.values('region').annotate(
             count=Count('id'),
             revenue=Sum('amount')
         ).order_by('-count')
-        
-        # Vehicle size distribution
+
+        # Vehicle size distribution (exclude cancelled)
         vehicle_distribution = bills_queryset.values('vehicle_size').annotate(
             count=Count('id'),
             revenue=Sum('amount')
         ).order_by('-count')
-        
-        # Top destinations
+
+        # Top destinations (exclude cancelled)
         top_destinations = bills_queryset.values('destination').annotate(
             count=Count('id'),
             revenue=Sum('amount')
         ).order_by('-count')[:10]
-        
-        # Issue locations distribution
+
+        # Issue locations distribution (exclude cancelled)
         issue_locations = bills_queryset.values('issue_location').annotate(
             count=Count('id'),
             revenue=Sum('amount')
@@ -114,18 +111,25 @@ def analytics_overview(request):
         
         response_data = {
             'summary': {
-                'total_bills': total_bills,
+                'total_bills': total_bills,  # Excludes cancelled
                 'completed_bills': completed_bills,
                 'pending_bills': pending_bills,
-                'cancelled_bills': cancelled_bills,
+                'cancelled_bills': cancelled_bills,  # Provided for UI but not part of totals
                 'overdue_bills': overdue_bills,
-                'total_revenue': float(total_revenue),
+                'total_revenue': float(total_revenue),  # Excludes cancelled
                 'completed_revenue': float(completed_revenue),
                 'completion_rate': round(completion_rate, 2),
                 'avg_bill_value': float(avg_bill_value),
                 'growth_rate': round(growth_rate, 2),
             },
-            'daily_trends': list(daily_trends),
+            'daily_trends': [
+                {
+                    'date': dt['local_date'].isoformat() if dt['local_date'] else None,
+                    'bills_count': dt['bills_count'],
+                    'revenue': dt['revenue'],
+                    'completed_count': dt['completed_count']
+                } for dt in daily_trends
+            ],
             'material_distribution': list(material_distribution),
             'regional_distribution': list(regional_distribution),
             'vehicle_distribution': list(vehicle_distribution),
