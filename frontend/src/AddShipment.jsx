@@ -73,6 +73,7 @@ export default function AddShipment() {
   ]
 
   const vehicleSizes = [
+    { en: "420 cubic feet", np: "४२० घन फिट", value: "420 cubic feet" },
     { en: "260 cubic feet", np: "२६० घन फिट", value: "260 cubic feet" },
     { en: "160 cubic feet", np: "१६० घन फिट", value: "160 cubic feet" },
     { en: "100 cubic feet", np: "१०० घन फिट", value: "100 cubic feet" },
