@@ -55,6 +55,10 @@ export default function Home() {
   const [isCancelling, setIsCancelling] = useState(false)
   const [isCompleting, setIsCompleting] = useState(false)
   const [showCompleteDialog, setShowCompleteDialog] = useState(false)
+  // Multi-select state for active shipments
+  const [selectedActiveIds, setSelectedActiveIds] = useState(new Set())
+  const [isBulkCompleting, setIsBulkCompleting] = useState(false)
+  const [showBulkCompleteDialog, setShowBulkCompleteDialog] = useState(false)
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
@@ -207,6 +211,37 @@ export default function Home() {
   const handleTruckClick = truck => setSelectedTruck(truck)
   const closeDetails = () => setSelectedTruck(null)
 
+  // Keep selections in sync when active list changes
+  useEffect(() => {
+    setSelectedActiveIds(prev => {
+      const keep = new Set()
+      for (const id of prev) {
+        if (activeShipments.some(t => t.id === id)) keep.add(id)
+      }
+      return keep
+    })
+  }, [activeShipments])
+
+  const selectedCount = selectedActiveIds.size
+  const allSelected = activeShipments.length > 0 && selectedCount === activeShipments.length
+
+  const toggleSelectActive = (id) => {
+    setSelectedActiveIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAllActive = () => {
+    setSelectedActiveIds(prev => {
+      if (activeShipments.length === 0) return new Set()
+      if (prev.size === activeShipments.length) return new Set()
+      return new Set(activeShipments.map(t => t.id))
+    })
+  }
+
   const handleScan = async scannedCode => {
     try {
       setShowScanner(false)
@@ -293,7 +328,7 @@ export default function Home() {
   const formatDateTime = dt =>
     new Date(dt).toLocaleDateString("en-US", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" })
 
-  const CompactBillCard = ({ truck, isCompleted=false, isCancelled=false }) => {
+  const CompactBillCard = ({ truck, isCompleted=false, isCancelled=false, selectable=false, selected=false, onToggleSelect }) => {
     const overdue = !isCompleted && new Date() > new Date(truck.expectedTime)
     const local = truck.region === "local"
     return (
@@ -303,6 +338,15 @@ export default function Home() {
         onClick={()=>handleTruckClick(truck)}
       >
         <div className="flex justify-between items-start">
+          {selectable && (
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={(e) => { e.stopPropagation(); onToggleSelect && onToggleSelect(truck.id) }}
+              onClick={(e) => e.stopPropagation()}
+              className="h-4 w-4 mt-0.5 mr-2 accent-blue-600 border-gray-300 rounded"
+            />
+          )}
           <div className="font-semibold text-sm sm:text-base">{truck.vehicleNumber}</div>
           <div className="flex text-xs justify-between items-center">
             <span className="truncate flex-1 mr-2">{truck.cargo} - </span>
@@ -381,6 +425,40 @@ export default function Home() {
     }
   }
 
+  const handleBulkComplete = async () => {
+    if (selectedActiveIds.size === 0) return
+    setIsBulkCompleting(true)
+    try {
+      const toComplete = activeShipments.filter(t => selectedActiveIds.has(t.id))
+      const results = await Promise.allSettled(
+        toComplete.map(t =>
+          api.patch(`/bills/bills/${t.id}/`, { status: "completed", code: t.billNumber })
+        )
+      )
+
+      const success = results.filter(r => r.status === "fulfilled").length
+      const failed = results.length - success
+
+      // Refresh lists
+      await fetchActiveShipments()
+      await fetchCompletedShipments(1)
+      setSelectedActiveIds(new Set())
+
+      setScanResult({
+        type: failed > 0 ? 'error' : 'success',
+        message: failed > 0
+          ? `Completed ${success} shipments. ${failed} failed.`
+          : `Completed ${success} shipments successfully!`,
+        show: true,
+      })
+    } catch (error) {
+      setScanResult({ type: 'error', message: 'Bulk complete failed', show: true })
+    } finally {
+      setIsBulkCompleting(false)
+      setShowBulkCompleteDialog(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar
@@ -406,16 +484,76 @@ export default function Home() {
                     <h2 className="flex items-center gap-2 font-semibold">
                       <Clock className="h-5 w-5 text-blue-600"/> Active Shipments
                     </h2>
-                    <span className="text-sm text-gray-500">{activeCount} bills</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-gray-500">{activeCount} bills</span>
+                      {userRole === "Admin" && (
+                        <div className="flex items-center gap-2">
+                          <label className="flex items-center gap-1 text-sm text-gray-700">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 accent-blue-600"
+                              checked={allSelected}
+                              onChange={toggleSelectAllActive}
+                            />
+                            Select all
+                          </label>
+                          <Dialog open={showBulkCompleteDialog} onOpenChange={setShowBulkCompleteDialog}>
+                            <DialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                                disabled={selectedCount === 0 || isBulkCompleting}
+                                onClick={() => setShowBulkCompleteDialog(true)}
+                              >
+                                {isBulkCompleting ? 'Completing...' : `Complete Selected (${selectedCount})`}
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-md">
+                              <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2 text-green-600">
+                                  <CheckCircle className="h-5 w-5" />
+                                  Complete Selected Shipments
+                                </DialogTitle>
+                                <DialogDescription className="pt-2">
+                                  Are you sure you want to complete {selectedCount} selected shipment(s)? This action cannot be undone.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <DialogFooter className="gap-2 sm:gap-0">
+                                <Button
+                                  variant="outline"
+                                  onClick={() => setShowBulkCompleteDialog(false)}
+                                  disabled={isBulkCompleting}
+                                >
+                                  Keep
+                                </Button>
+                                <Button
+                                  onClick={handleBulkComplete}
+                                  disabled={isBulkCompleting}
+                                  className="flex items-center bg-green-600 gap-2"
+                                >
+                                  {isBulkCompleting ? 'Completing...' : 'Complete'}
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="flex-1 overflow-hidden p-3">
                     <div className="h-full overflow-y-auto space-y-1 pr-2">
-                      {activeShipments.length === 0 ? (
+                        {activeShipments.length === 0 ? (
                         <p className="text-center text-gray-500 py-8">No active shipments</p>
                       ) : (
-                        activeShipments.map(truck => (
-                          <CompactBillCard key={truck.id} truck={truck} />
-                        ))
+                          activeShipments.map(truck => (
+                            <CompactBillCard
+                              key={truck.id}
+                              truck={truck}
+                              selectable={userRole === 'Admin'}
+                              selected={selectedActiveIds.has(truck.id)}
+                              onToggleSelect={toggleSelectActive}
+                            />
+                          ))
                       )}
                     </div>
                   </div>
@@ -509,7 +647,61 @@ export default function Home() {
                   <h2 className="flex items-center gap-2 font-semibold text-sm sm:text-base">
                     <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600"/> Active Shipments
                   </h2>
-                  <span className="text-xs sm:text-sm text-gray-500">{activeCount} bills</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs sm:text-sm text-gray-500">{activeCount} bills</span>
+                    {userRole === "Admin" && (
+                      <>
+                        <label className="flex items-center gap-1 text-xs sm:text-sm text-gray-700">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 accent-blue-600"
+                            checked={allSelected}
+                            onChange={toggleSelectAllActive}
+                          />
+                          Select all
+                        </label>
+                        <Dialog open={showBulkCompleteDialog} onOpenChange={setShowBulkCompleteDialog}>
+                          <DialogTrigger asChild>
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                              disabled={selectedCount === 0 || isBulkCompleting}
+                              onClick={() => setShowBulkCompleteDialog(true)}
+                            >
+                              {isBulkCompleting ? 'Completing...' : `Complete (${selectedCount})`}
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                              <DialogTitle className="flex items-center gap-2 text-green-600">
+                                <CheckCircle className="h-5 w-5" />
+                                Complete Selected Shipments
+                              </DialogTitle>
+                              <DialogDescription className="pt-2">
+                                Are you sure you want to complete {selectedCount} selected shipment(s)? This action cannot be undone.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter className="gap-2 sm:gap-0">
+                              <Button
+                                variant="outline"
+                                onClick={() => setShowBulkCompleteDialog(false)}
+                                disabled={isBulkCompleting}
+                              >
+                                Keep
+                              </Button>
+                              <Button
+                                onClick={handleBulkComplete}
+                                disabled={isBulkCompleting}
+                                className="flex items-center bg-green-600 gap-2"
+                              >
+                                {isBulkCompleting ? 'Completing...' : 'Complete'}
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      </>
+                    )}
+                  </div>
                 </div>
                 <div className=" h-80 overflow-y-auto">
                   {activeShipments.length === 0 ? (
@@ -517,7 +709,13 @@ export default function Home() {
                   ) : (
                     <div className="space-y-2">
                       {activeShipments.map(truck => (
-                        <CompactBillCard key={truck.id} truck={truck} />
+                        <CompactBillCard
+                          key={truck.id}
+                          truck={truck}
+                          selectable={userRole === 'Admin'}
+                          selected={selectedActiveIds.has(truck.id)}
+                          onToggleSelect={toggleSelectActive}
+                        />
                       ))}
                     </div>
                   )}
